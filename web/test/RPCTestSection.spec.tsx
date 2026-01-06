@@ -6,7 +6,6 @@
  * implementation for template users.
  */
 
-import * as React from "react";
 import { render, screen } from "@testing-library/react";
 import {
   createConnectedMockZMKApp,

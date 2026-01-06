@@ -3,7 +3,6 @@
  * Demonstrates custom RPC communication with a ZMK device
  */
 
-import * as React from "react";
 import { useContext, useState } from "react";
 import "./App.css";
 import { connect as serial_connect } from "@zmkfirmware/zmk-studio-ts-client/transport/serial";

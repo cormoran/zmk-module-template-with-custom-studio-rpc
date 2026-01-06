@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 src/proto/**/*.ts
+
+# Test coverage
+coverage
