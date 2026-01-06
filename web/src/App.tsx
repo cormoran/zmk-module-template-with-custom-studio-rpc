@@ -70,7 +70,7 @@ function App() {
   );
 }
 
-function RPCTestSection() {
+export function RPCTestSection() {
   const zmkApp = useContext(ZMKAppContext);
   const [inputValue, setInputValue] = useState<number>(42);
   const [response, setResponse] = useState<string | null>(null);

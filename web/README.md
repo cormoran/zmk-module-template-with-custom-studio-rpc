@@ -117,6 +117,19 @@ To adapt this template for your own ZMK module:
 - Connection state is managed by the `useZMKApp` hook from react-zmk-studio
 - RPC calls are made through `ZMKCustomSubsystem` service class
 
+## Testing
+
+This template uses Jest with the test helpers from
+`@cormoran/zmk-studio-react-hook/testing`.
+
+```bash
+npm test
+```
+
+The helpers provide a ready-to-use `ZMKAppProvider` and mock factories, so you
+can render components in a connected or disconnected state without talking to a
+real device. See `src/__tests__/App.test.tsx` for a minimal example.
+
 ## See Also
 
 - [design.md](./design.md) - Detailed frontend architecture documentation

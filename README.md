@@ -176,7 +176,14 @@ west zmk-test tests -m .
 
 **Web UI test**
 
-TODO
+Run tests in `./web` to verify the template UI and ZMK app integration.
+
+```bash
+cd web
+npm test
+```
+
+See `./web/README.md` for details about the test helpers and example.
 
 ## Publishing Web UI
 
