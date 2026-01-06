@@ -30,7 +30,7 @@ const config: JestConfigWithTsJest = {
           baseUrl: ".",
           paths: {
             "@cormoran/zmk-studio-react-hook/testing": [
-              "./node_modules/@cormoran/zmk-studio-react-hook/lib/testing/index.d.ts",
+              "./node_modules/@cormoran/zmk-studio-react-hook/lib/testing/index.js",
             ],
           },
         },
