@@ -176,7 +176,15 @@ west zmk-test tests -m .
 
 **Web UI test**
 
-TODO
+The web frontend includes Jest-based tests. To run them:
+
+```bash
+cd web
+npm install
+npm run test
+```
+
+See [./web/README.md](./web/README.md#testing) for more details on writing tests.
 
 ## Publishing Web UI
 

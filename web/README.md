@@ -10,6 +10,7 @@ modules that implement custom Studio RPC subsystems.
 - **React + TypeScript**: Modern web development with Vite for fast builds
 - **react-zmk-studio**: Uses the `@cormoran/zmk-studio-react-hook` library for
   simplified ZMK integration
+- **Testing**: Jest-based test suite with react-zmk-studio testing helpers
 
 ## Quick Start
 
@@ -25,6 +26,9 @@ npm run dev
 
 # Build for production
 npm run build
+
+# Run tests
+npm run test
 ```
 
 ## Project Structure
@@ -37,6 +41,8 @@ src/
 └── proto/                # Generated protobuf TypeScript types
     └── zmk/template/
         └── custom.ts
+test/
+└── App.spec.tsx          # Component tests
 ```
 
 ## How It Works
@@ -88,6 +94,99 @@ const service = new ZMKCustomSubsystem(state.connection, subsystem.index);
 const response = await service.callRPC(payload);
 ```
 
+## Testing
+
+The project uses Jest with testing helpers from `@cormoran/zmk-studio-react-hook/testing`.
+
+### Running Tests
+
+```bash
+# Run tests once
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+### Writing Tests
+
+Test files are located in the `test/` directory with `.spec.tsx` extension.
+
+Key patterns for testing ZMK components:
+
+1. **Mock the zmk-studio-ts-client module**:
+
+```typescript
+jest.mock("@zmkfirmware/zmk-studio-ts-client", () => ({
+  create_rpc_connection: jest.fn(),
+  call_rpc: jest.fn(),
+}));
+```
+
+2. **Mock the transport module** (since Web Serial API isn't available in tests):
+
+```typescript
+jest.mock("@zmkfirmware/zmk-studio-ts-client/transport/serial", () => ({
+  connect: jest.fn(),
+}));
+```
+
+3. **Use setupZMKMocks() to configure mock behavior**:
+
+```typescript
+import { setupZMKMocks, createMockTransport } from "@cormoran/zmk-studio-react-hook/testing";
+
+let mocks: ReturnType<typeof setupZMKMocks>;
+
+beforeEach(() => {
+  mocks = setupZMKMocks();
+});
+
+it("should connect successfully", async () => {
+  // Configure successful connection
+  mocks.mockSuccessfulConnection({
+    deviceName: "My Device",
+    subsystems: ["my_subsystem"],
+  });
+
+  // Mock the transport
+  const serialModule = await import("@zmkfirmware/zmk-studio-ts-client/transport/serial");
+  (serialModule.connect as jest.Mock).mockResolvedValue(createMockTransport());
+
+  // ... render and test
+});
+```
+
+4. **Test connection states**:
+
+```typescript
+// Test disconnected state
+expect(screen.getByText("Connect")).toBeDefined();
+
+// Test connected state
+await waitFor(() => {
+  expect(screen.getByText(/Connected to:/)).toBeDefined();
+});
+
+// Test error state
+mocks.mockFailedConnection("Connection error");
+```
+
+See `test/App.spec.tsx` for complete examples.
+
+### Test Helpers Reference
+
+The `@cormoran/zmk-studio-react-hook/testing` module provides:
+
+- `setupZMKMocks()` - Sets up common mocks for tests
+- `createMockTransport()` - Creates a mock RPC transport
+- `createMockZMKApp()` - Creates a mock ZMK app instance
+- `createConnectedMockZMKApp()` - Creates a connected mock instance
+- `ZMKAppProvider` - Test wrapper for ZMKAppContext
+
+For more details, see the
+[react-zmk-studio README](https://github.com/cormoran/react-zmk-studio#testing).
+
 ## Customization
 
 To adapt this template for your own ZMK module:
@@ -111,8 +210,6 @@ To adapt this template for your own ZMK module:
 
 ## Development Notes
 
-- The `react-zmk-studio` directory contains a copy of the library for
-  reference - it's automatically built and linked via `package.json`
 - Proto generation uses `buf` and `ts-proto` for clean TypeScript types
 - Connection state is managed by the `useZMKApp` hook from react-zmk-studio
 - RPC calls are made through `ZMKCustomSubsystem` service class
@@ -120,5 +217,5 @@ To adapt this template for your own ZMK module:
 ## See Also
 
 - [design.md](./design.md) - Detailed frontend architecture documentation
-- [react-zmk-studio/README.md](./react-zmk-studio/README.md) - react-zmk-studio
-  library documentation
+- [react-zmk-studio README](https://github.com/cormoran/react-zmk-studio) -
+  react-zmk-studio library documentation
