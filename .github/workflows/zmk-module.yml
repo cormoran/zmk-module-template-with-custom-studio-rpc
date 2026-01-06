@@ -35,3 +35,9 @@ jobs:
           west zephyr-export
       - name: Test
         run: python3 -m unittest -v
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zmk-firmware
+          path: |
+            build/*/zephyr/zmk.uf2
