@@ -61,8 +61,8 @@ describe("App Component", () => {
       });
 
       // Mock the serial connect function to return our mock transport
-      const { connect: serial_connect } = require("@zmkfirmware/zmk-studio-ts-client/transport/serial");
-      serial_connect.mockResolvedValue(mocks.mockTransport);
+      const { connect: serial_connect } = await import("@zmkfirmware/zmk-studio-ts-client/transport/serial");
+      (serial_connect as jest.Mock).mockResolvedValue(mocks.mockTransport);
 
       // Render the app
       render(<App />);
