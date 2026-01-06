@@ -15,22 +15,22 @@ describe("App Component", () => {
       render(<App />);
       
       // Check for the main title
-      expect(screen.getByText(/ZMK Module Template/i)).toBeDefined();
-      expect(screen.getByText(/Custom Studio RPC Demo/i)).toBeDefined();
+      expect(screen.getByText(/ZMK Module Template/i)).toBeInTheDocument();
+      expect(screen.getByText(/Custom Studio RPC Demo/i)).toBeInTheDocument();
     });
 
     it("should render connection button when disconnected", () => {
       render(<App />);
 
       // Check for connection button in disconnected state
-      expect(screen.getByText(/Connect Serial/i)).toBeDefined();
+      expect(screen.getByText(/Connect Serial/i)).toBeInTheDocument();
     });
 
     it("should render footer", () => {
       render(<App />);
 
       // Check for footer text
-      expect(screen.getByText(/Template Module/i)).toBeDefined();
+      expect(screen.getByText(/Template Module/i)).toBeInTheDocument();
     });
   });
 });

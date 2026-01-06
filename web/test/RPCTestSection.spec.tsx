@@ -29,10 +29,10 @@ describe("RPCTestSection Component", () => {
       );
 
       // Check for RPC test UI elements
-      expect(screen.getByText(/RPC Test/i)).toBeDefined();
-      expect(screen.getByText(/Send a sample request/i)).toBeDefined();
-      expect(screen.getByLabelText(/Value:/i)).toBeDefined();
-      expect(screen.getByText(/Send Request/i)).toBeDefined();
+      expect(screen.getByText(/RPC Test/i)).toBeInTheDocument();
+      expect(screen.getByText(/Send a sample request/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Value:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Send Request/i)).toBeInTheDocument();
     });
 
     it("should show default input value", () => {
@@ -67,8 +67,8 @@ describe("RPCTestSection Component", () => {
       );
 
       // Check for warning message
-      expect(screen.getByText(/Subsystem "zmk__template" not found/i)).toBeDefined();
-      expect(screen.getByText(/Make sure your firmware includes the template module/i)).toBeDefined();
+      expect(screen.getByText(/Subsystem "zmk__template" not found/i)).toBeInTheDocument();
+      expect(screen.getByText(/Make sure your firmware includes the template module/i)).toBeInTheDocument();
     });
   });
 
