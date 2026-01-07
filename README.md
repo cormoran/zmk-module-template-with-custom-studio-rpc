@@ -185,6 +185,8 @@ npm test
 
 ## Publishing Web UI
 
+### GitHub Pages (Production)
+
 Github actions are pre-configured to publish web UI to github pages.
 
 1. Visit Settings>Pages
@@ -194,6 +196,22 @@ Github actions are pre-configured to publish web UI to github pages.
 
 Then, the Web UI will be available in
 `https://<your github account>.github.io/<repository name>/` like https://cormoran.github.io/zmk-module-template-with-custom-studio-rpc.
+
+### Cloudflare Pages (Pull Request Preview)
+
+For previewing web UI changes in pull requests, you can use Cloudflare Pages deployment. This allows you to review UI changes before merging without consuming GitHub Pages deployment quota.
+
+**Setup:**
+1. Follow the setup instructions in [.github/workflows/CLOUDFLARE_PREVIEW_SETUP.md](.github/workflows/CLOUDFLARE_PREVIEW_SETUP.md)
+2. Configure Cloudflare API tokens and secrets in your repository
+
+**Usage:**
+1. Create a pull request with web UI changes (`web/` or `proto/` directories)
+2. Go to Actions → "Deploy Web UI Preview to Cloudflare Pages"
+3. Click "Run workflow" and enter the PR number
+4. The deployment URL will be posted as a comment on the PR
+
+This deployment is manually triggered to minimize costs and stay within Cloudflare's free tier.
 
 ## More Info
 
