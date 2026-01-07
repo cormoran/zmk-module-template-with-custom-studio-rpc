@@ -18,7 +18,7 @@ on:
 concurrency:
   group: >-
     cloudflare-preview-${{
-      github.event.inputs.pr_number || github.run_id
+      github.event.inputs.pr_number || github.ref_name
     }}
   cancel-in-progress: true
 
@@ -74,8 +74,8 @@ jobs:
           fi
 
           # Checkout the PR branch
-          git fetch origin ${{ steps.get-pr.outputs.pr_branch }}
-          git checkout ${{ steps.get-pr.outputs.pr_branch }}
+          git fetch origin "${{ steps.get-pr.outputs.pr_branch }}"
+          git switch "${{ steps.get-pr.outputs.pr_branch }}"
 
           # Check if web directory has changes compared to base branch
           BASE_BRANCH="main"
@@ -146,9 +146,16 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = parseInt('${{
+            const prNumberStr = '${{
               needs.check-changes.outputs.pr_number
-            }}');
+            }}';
+            const prNumber = parseInt(prNumberStr);
+
+            if (!prNumber || isNaN(prNumber)) {
+              core.setFailed('Invalid PR number: ' + prNumberStr);
+              return;
+            }
+
             const deploymentUrl = '${{ steps.deploy.outputs.url }}';
             const aliasUrl = '${{ steps.deploy.outputs.alias }}';
 
