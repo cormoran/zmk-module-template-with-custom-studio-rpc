@@ -8,6 +8,11 @@ on:
         description: 'Pull Request Number'
         required: false
         type: number
+      project_name:
+        description: 'Cloudflare Pages Project Name'
+        required: false
+        default: 'zmk-module-web-ui'
+        type: string
 
 # Allow only one concurrent deployment per PR
 concurrency:
@@ -130,7 +135,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: zmk-module-web-ui
+          projectName: ${{ inputs.project_name || 'zmk-module-web-ui' }}
           directory: web/dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ needs.check-changes.outputs.pr_branch }}

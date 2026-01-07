@@ -50,15 +50,6 @@ The `cloudflare-preview.yml` workflow allows you to manually deploy web UI previ
    - `CLOUDFLARE_API_TOKEN`: Your API token from step 2
    - `CLOUDFLARE_ACCOUNT_ID`: Your Account ID from step 3
 
-### 5. Update Project Name (if needed)
-
-If you named your Cloudflare Pages project something other than `zmk-module-web-ui`, update the workflow file:
-
-```yaml
-# In .github/workflows/cloudflare-preview.yml
-projectName: your-project-name  # Change this line
-```
-
 ## Usage
 
 ### Deploying a Preview
@@ -67,7 +58,9 @@ projectName: your-project-name  # Change this line
 2. Go to the **Actions** tab in your repository
 3. Select the **Deploy Web UI Preview to Cloudflare Pages** workflow
 4. Click **Run workflow**
-5. Enter the PR number (or leave empty if the workflow is run from the PR branch)
+5. Fill in the workflow inputs:
+   - **PR number**: Enter the PR number (or leave empty if running from the PR branch)
+   - **Project name**: Enter your Cloudflare Pages project name (defaults to `zmk-module-web-ui` if left empty)
 6. Click **Run workflow**
 
 The workflow will:
