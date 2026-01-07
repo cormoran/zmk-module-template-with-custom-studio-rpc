@@ -199,19 +199,16 @@ Then, the Web UI will be available in
 
 ### Cloudflare Pages (Pull Request Preview)
 
-For previewing web UI changes in pull requests, you can use Cloudflare Pages deployment. This allows you to review UI changes before merging without consuming GitHub Pages deployment quota.
+For previewing web UI changes in pull requests:
 
-**Setup:**
-1. Follow the setup instructions in [.github/workflows/CLOUDFLARE_PREVIEW_SETUP.md](.github/workflows/CLOUDFLARE_PREVIEW_SETUP.md)
-2. Configure Cloudflare API tokens and secrets in your repository
+1. Create a Cloudflare Pages project and configure secrets:
+   - `CLOUDFLARE_API_TOKEN`: API token with Cloudflare Pages edit permission
+   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
+   - (Optional) `CLOUDFLARE_PROJECT_NAME`: Project name (defaults to `zmk-module-web-ui`)
 
-**Usage:**
-1. Create a pull request with web UI changes (`web/` or `proto/` directories)
-2. Go to Actions → "Deploy Web UI Preview to Cloudflare Pages"
-3. Click "Run workflow" and enter the PR number
-4. The deployment URL will be posted as a comment on the PR
+2. Set up an `approval-required` environment in repository settings requiring approval from repository owners
 
-This deployment is manually triggered to minimize costs and stay within Cloudflare's free tier.
+3. Create a pull request with web UI changes - the preview deployment will trigger automatically and wait for approval
 
 ## More Info
 
