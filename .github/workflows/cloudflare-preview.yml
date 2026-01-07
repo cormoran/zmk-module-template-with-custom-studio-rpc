@@ -25,6 +25,9 @@ concurrency:
 jobs:
   check-changes:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       should_deploy: ${{ steps.check.outputs.should_deploy }}
       pr_number: ${{ steps.get-pr.outputs.pr_number }}
