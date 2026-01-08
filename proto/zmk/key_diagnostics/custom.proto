@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package zmk.key_diagnostics;
+
+enum KscanType {
+    KSCAN_TYPE_UNSPECIFIED = 0;
+    KSCAN_TYPE_CHARLIEPLEX = 1;
+    KSCAN_TYPE_UNSUPPORTED = 2;
+}
+
+message GetDiagnosticsRequest {
+    bool reset_after = 1;
+}
+
+message ResetDiagnosticsRequest {
+}
+
+message Request {
+    oneof request_type {
+        GetDiagnosticsRequest get_report = 1;
+        ResetDiagnosticsRequest reset = 2;
+    }
+}
+
+message ErrorResponse {
+    string message = 1;
+}
+
+message GpioPin {
+    string port = 1;
+    uint32 pin = 2;
+    uint32 flags = 3;
+}
+
+message KeyPhysical {
+    uint32 position = 1;
+    int32 x = 2;
+    int32 y = 3;
+    int32 width = 4;
+    int32 height = 5;
+    int32 rx = 6;
+    int32 ry = 7;
+    int32 r = 8;
+}
+
+message KeyDiagnostics {
+    uint32 position = 1;
+    uint32 press_count = 2;
+    uint32 release_count = 3;
+    uint32 chatter_count = 4;
+    bool is_pressed = 5;
+    int64 last_change_ms = 6;
+    uint32 row = 7;
+    uint32 column = 8;
+    bool has_gpio_mapping = 9;
+    GpioPin drive_gpio = 10;
+    GpioPin sense_gpio = 11;
+}
+
+message DiagnosticsReport {
+    string layout_name = 1;
+    uint32 layout_index = 2;
+    KscanType kscan_type = 3;
+    uint32 chatter_window_ms = 4;
+    repeated KeyPhysical physical_keys = 5;
+    repeated KeyDiagnostics keys = 6;
+}
+
+message ResetDiagnosticsResponse {
+    bool ok = 1;
+}
+
+message Response {
+    oneof response_type {
+        ErrorResponse error = 1;
+        DiagnosticsReport diagnostics = 2;
+        ResetDiagnosticsResponse reset = 3;
+    }
+}

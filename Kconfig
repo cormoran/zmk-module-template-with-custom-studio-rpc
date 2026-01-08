@@ -1,10 +1,16 @@
-config ZMK_TEMPLATE_FEATURE
-    bool "Enable template feature"
+config ZMK_KEY_DIAGNOSTICS
+    bool "Enable key diagnostics module"
 
-if ZMK_TEMPLATE_FEATURE
+if ZMK_KEY_DIAGNOSTICS
 
-config ZMK_TEMPLATE_FEATURE_STUDIO_RPC
-    bool "Enable template feature custom Studio RPC"
+config ZMK_KEY_DIAGNOSTICS_STUDIO_RPC
+    bool "Enable key diagnostics custom Studio RPC"
     depends on ZMK_STUDIO
+
+config ZMK_KEY_DIAGNOSTICS_CHATTER_WINDOW_MS
+    int "Chatter detection window (ms)"
+    default 40
+    help
+      The maximum time between state changes to count as switch chatter.
 
 endif

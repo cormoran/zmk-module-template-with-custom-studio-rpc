@@ -1,40 +1,28 @@
-# ZMK Module Template with Custom Web UI
+# ZMK Key Diagnostics Module with Custom Web UI
 
-This repository contains a template for a ZMK module with Web UI by using
-**unofficial** custom studio rpc protocol.
+This repository provides a ZMK module and Web UI to help investigate unstable
+or non-working keys. It focuses on charlieplex matrix scans first, surfacing
+per-key chatter counts and the associated GPIO pair so you can pinpoint cold
+solder joints or hot swap socket issues.
 
-Basic usage is the same to official template. Read through the
-[ZMK Module Creation](https://zmk.dev/docs/development/module-creation) page for
-details on how to configure this template.
+The firmware uses the **unofficial** custom ZMK Studio RPC protocol, and the
+frontend renders the physical layout plus diagnostic metrics for each key.
 
-### Supporting custom studio RPC protocol
+## Features
 
-This template contains sample implementation. Please edit and rename below files
-to implement your protocol.
+- Per-key press/release counters and chatter detection window tracking.
+- GPIO mapping for charlieplex matrices (row/column == drive/sense pins).
+- Physical key layout visualization using ZMK Studio physical layouts.
+- Interactive UI to highlight suspect keys and inspect details.
 
-- proto `proto/zmk/template/custom.proto` and `custom.options`
-- handler `src/studio/custom_handler.c`
-- flags in `Kconfig`
-- test `./tests/studio`
+## Setup
 
-### Implementing Web UI for the custom protocol
-
-`./web` contains boilerplate based on
-[vite template `react-ts`](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts)
-(`npm create vite@latest web -- --template react-ts`) and react hook library
-[@cormoran/react-zmk-studio](https://github.com/cormoran/react-zmk-studio).
-
-Please refer
-[react-zmk-studio README](https://github.com/cormoran/react-zmk-studio/blob/main/README.md).
-
-## Setup (Please edit!)
-
-You can use this zmk-module with below setup.
+You can use this zmk-module with the below setup.
 
 1. Add dependency to your `config/west.yml`.
 
    ```yaml:config/west.yml
-   # Please update with your account and repository name after create repository from template
+   # Please update with your account and repository name after creating this repository
    manifest:
    remotes:
        ...
@@ -58,21 +46,52 @@ You can use this zmk-module with below setup.
 1. Enable flag in your `config/<shield>.conf`
 
    ```conf:<shield>.conf
-   # Enable standalone features
-   CONFIG_ZMK_TEMPLATE_FEATURE=y
+   # Enable key diagnostics
+   CONFIG_ZMK_KEY_DIAGNOSTICS=y
 
    # Optionally enable studio custom RPC features
    CONFIG_ZMK_STUDIO=y
-   CONFIG_ZMK_TEMPLATE_FEATURE_STUDIO_RPC=y
+   CONFIG_ZMK_KEY_DIAGNOSTICS_STUDIO_RPC=y
+
+   # Optional: tune chatter window (ms)
+   # CONFIG_ZMK_KEY_DIAGNOSTICS_CHATTER_WINDOW_MS=40
    ```
 
-1. Update your `<keyboard>.keymap` like .....
+1. Ensure your keyboard defines a physical layout and matrix transform (required for ZMK Studio).
 
-   ```
-   / {
-       ...
-   }
-   ```
+1. For charlieplex matrices, keep using the standard ZMK definitions:
+   - `compatible = "zmk,kscan-gpio-charlieplex";`
+   - `gpios` list in the order used by your matrix transform (row/col).
+   - A matrix transform that maps `(row, col)` pairs to key positions.
+
+## Diagnostics Protocol
+
+The custom RPC schema lives at:
+
+- proto: `proto/zmk/key_diagnostics/custom.proto` and `custom.options`
+- handler: `src/studio/custom_handler.c`
+
+The protocol returns per-key diagnostics, physical key geometry, and GPIO
+mapping for charlieplex matrices. The response is designed to be extensible to
+other kscan drivers in the future.
+
+## Web UI
+
+The web UI lives in `./web` and provides an interactive visualization of the
+diagnostic report. It relies on ZMK Studio physical layouts to render key
+positions.
+
+### Interpreting Results
+
+- **Chatter detected (red)**: The key toggled state within the configured
+  chatter window. This often points to a loose hot swap socket or insufficient
+  solder.
+- **Imbalanced press/release (amber)**: The counts differ, indicating the
+  switch is intermittently dropping events.
+- **Stable (gray)**: No chatter and balanced counts.
+
+Use the detail panel to identify the charlieplex GPIO pair (drive/sense pins)
+associated with the key and inspect the corresponding solder joints.
 
 ## Development Guide
 
