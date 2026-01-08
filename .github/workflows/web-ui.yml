@@ -73,7 +73,7 @@ jobs:
       deployments: write
     environment:
       name: approval-required
-      url: ${{ steps.deploy.outputs.url }}
+      url: ${{ steps.deploy.outputs.deployment-url }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -85,13 +85,11 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         id: deploy
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: ${{ vars.CLOUDFLARE_PROJECT_NAME || 'zmk-module-web-ui' }}
-          directory: web/dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy web/dist --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME || 'zmk-module-web-ui' }}
 
       - name: Comment PR with deployment URL
         uses: actions/github-script@v7
@@ -99,7 +97,7 @@ jobs:
           script: |
             const comment = `## 🚀 Cloudflare Pages Preview
 
-            **Preview URL:** ${{ steps.deploy.outputs.url }}
+            **Preview URL:** ${{ steps.deploy.outputs.deployment-url }}
 
             <sub>Deployed from commit ${context.sha.substring(0, 7)}</sub>`;
 
