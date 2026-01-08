@@ -1,21 +1,30 @@
-# ZMK Module Template with Custom Web UI
+# ZMK Battery History Module with Custom Web UI
 
-This repository contains a template for a ZMK module with Web UI by using
-**unofficial** custom studio rpc protocol.
+This repository contains a ZMK module and Web UI for tracking battery history
+via the **unofficial** custom Studio RPC protocol. The firmware records battery
+percentage samples in RAM and the web UI fetches them live from the device.
 
-Basic usage is the same to official template. Read through the
+Basic usage is the same to the official module template. Read through the
 [ZMK Module Creation](https://zmk.dev/docs/development/module-creation) page for
-details on how to configure this template.
+details on how to configure this module.
 
-### Supporting custom studio RPC protocol
+### Battery history custom Studio RPC protocol
 
-This template contains sample implementation. Please edit and rename below files
-to implement your protocol.
+The battery history implementation includes:
 
-- proto `proto/zmk/template/custom.proto` and `custom.options`
+- proto `proto/zmk/battery_history/custom.proto` and `custom.options`
 - handler `src/studio/custom_handler.c`
+- battery history sampler `src/battery_history.c`
 - flags in `Kconfig`
 - test `./tests/studio`
+
+#### Storage design
+
+- Samples are stored in RAM only to avoid flash wear on devices like the
+  XIAO nRF52840.
+- Sampling interval and buffer size are configurable through Kconfig.
+- A clear-history RPC is included so a future backend can persist and then
+  erase device history.
 
 ### Implementing Web UI for the custom protocol
 
@@ -59,11 +68,15 @@ You can use this zmk-module with below setup.
 
    ```conf:<shield>.conf
    # Enable standalone features
-   CONFIG_ZMK_TEMPLATE_FEATURE=y
+   CONFIG_ZMK_BATTERY_HISTORY=y
 
    # Optionally enable studio custom RPC features
    CONFIG_ZMK_STUDIO=y
-   CONFIG_ZMK_TEMPLATE_FEATURE_STUDIO_RPC=y
+   CONFIG_ZMK_BATTERY_HISTORY_STUDIO_RPC=y
+
+   # Optional tuning for battery history
+   # CONFIG_ZMK_BATTERY_HISTORY_SAMPLE_INTERVAL_SECONDS=900
+   # CONFIG_ZMK_BATTERY_HISTORY_MAX_ENTRIES=96
    ```
 
 1. Update your `<keyboard>.keymap` like .....

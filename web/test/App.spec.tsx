@@ -1,9 +1,8 @@
 /**
  * Tests for App component
- * 
+ *
  * This test file demonstrates how to test a ZMK web application using
- * the react-zmk-studio test helpers. It serves as a reference implementation
- * for users of this template.
+ * the react-zmk-studio test helpers.
  */
 
 import { render, screen, waitFor } from "@testing-library/react";
@@ -27,8 +26,10 @@ describe("App Component", () => {
       render(<App />);
       
       // Check for the main title
-      expect(screen.getByText(/ZMK Module Template/i)).toBeInTheDocument();
-      expect(screen.getByText(/Custom Studio RPC Demo/i)).toBeInTheDocument();
+      expect(screen.getByText(/AAA Battery History/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Track consumption trends/i)
+      ).toBeInTheDocument();
     });
 
     it("should render connection button when disconnected", () => {
@@ -42,7 +43,9 @@ describe("App Component", () => {
       render(<App />);
 
       // Check for footer text
-      expect(screen.getByText(/Template Module/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Built with ZMK custom Studio RPC/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -57,7 +60,7 @@ describe("App Component", () => {
       // Set up successful connection mock
       mocks.mockSuccessfulConnection({
         deviceName: "Test Keyboard",
-        subsystems: ["zmk__template"],
+        subsystems: ["zmk__battery_history"],
       });
 
       // Mock the serial connect function to return our mock transport
@@ -77,14 +80,16 @@ describe("App Component", () => {
 
       // Wait for connection to complete and verify connected state
       await waitFor(() => {
-        expect(screen.getByText(/Connected to: Test Keyboard/i)).toBeInTheDocument();
+        expect(screen.getByText(/Test Keyboard/i)).toBeInTheDocument();
       });
 
       // Verify disconnect button is now available
       expect(screen.getByText(/Disconnect/i)).toBeInTheDocument();
       
-      // Verify RPC test section is visible
-      expect(screen.getByText(/RPC Test/i)).toBeInTheDocument();
+      // Verify battery history section is visible
+      expect(
+        screen.getByRole("heading", { name: /Battery history/i, level: 2 })
+      ).toBeInTheDocument();
     });
   });
 });

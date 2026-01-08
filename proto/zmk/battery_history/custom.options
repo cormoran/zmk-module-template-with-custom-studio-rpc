@@ -1,0 +1,5 @@
+# Nanopb options file for custom.proto
+# This defines max sizes for string and repeated fields
+
+zmk.battery_history.ErrorResponse.message max_size:64
+zmk.battery_history.HistoryResponse.samples max_count:256
