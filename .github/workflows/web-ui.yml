@@ -32,7 +32,13 @@ jobs:
         run: npm run generate
       - name: Run lint
         run: npm run lint
-      - name: Build
+      - name: Build for Cloudflare Workers Preview
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: npm run build
+        env:
+          VITE_BASE: /
+      - name: Build for github pages
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: npm run build
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
@@ -89,13 +95,13 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy web/dist --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME || 'zmk-module-web-ui' }} --branch=${{ github.head_ref }} --commit-dirty=true
+          command: versions upload --assets dist --name zmk-module-web-ui --compatibility-date 2026-01-11
 
       - name: Comment PR with deployment URL
         uses: actions/github-script@v7
         with:
           script: |
-            const comment = `## 🚀 Cloudflare Pages Preview
+            const comment = `## 🚀 Cloudflare Workers Preview
 
             **Preview URL:** ${{ steps.deploy.outputs.deployment-url }}
 
@@ -109,7 +115,7 @@ jobs:
 
             const botComment = comments.find(comment =>
               comment.user.type === 'Bot' &&
-              comment.body.includes('🚀 Cloudflare Pages Preview')
+              comment.body.includes('🚀 Cloudflare Workers Preview')
             );
 
             if (botComment) {
