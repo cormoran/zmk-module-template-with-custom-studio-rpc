@@ -1,6 +1,6 @@
 /**
  * Tests for RPCTestSection component
- * 
+ *
  * This test demonstrates how to use react-zmk-studio test helpers to test
  * components that interact with ZMK devices. This serves as a reference
  * implementation for template users.
@@ -67,8 +67,14 @@ describe("RPCTestSection Component", () => {
       );
 
       // Check for warning message
-      expect(screen.getByText(/Subsystem "zmk__template" not found/i)).toBeInTheDocument();
-      expect(screen.getByText(/Make sure your firmware includes the template module/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Subsystem "zmk__template" not found/i)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Make sure your firmware includes the template module/i
+        )
+      ).toBeInTheDocument();
     });
   });
 

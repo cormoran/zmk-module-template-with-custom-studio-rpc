@@ -1,6 +1,6 @@
 /**
  * Tests for App component
- * 
+ *
  * This test file demonstrates how to test a ZMK web application using
  * the react-zmk-studio test helpers. It serves as a reference implementation
  * for users of this template.
@@ -25,7 +25,7 @@ describe("App Component", () => {
   describe("Basic Rendering", () => {
     it("should render the application header", () => {
       render(<App />);
-      
+
       // Check for the main title
       expect(screen.getByText(/ZMK Module Template/i)).toBeInTheDocument();
       expect(screen.getByText(/Custom Studio RPC Demo/i)).toBeInTheDocument();
@@ -61,7 +61,8 @@ describe("App Component", () => {
       });
 
       // Mock the serial connect function to return our mock transport
-      const { connect: serial_connect } = await import("@zmkfirmware/zmk-studio-ts-client/transport/serial");
+      const { connect: serial_connect } =
+        await import("@zmkfirmware/zmk-studio-ts-client/transport/serial");
       (serial_connect as jest.Mock).mockResolvedValue(mocks.mockTransport);
 
       // Render the app
@@ -77,12 +78,14 @@ describe("App Component", () => {
 
       // Wait for connection to complete and verify connected state
       await waitFor(() => {
-        expect(screen.getByText(/Connected to: Test Keyboard/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Connected to: Test Keyboard/i)
+        ).toBeInTheDocument();
       });
 
       // Verify disconnect button is now available
       expect(screen.getByText(/Disconnect/i)).toBeInTheDocument();
-      
+
       // Verify RPC test section is visible
       expect(screen.getByText(/RPC Test/i)).toBeInTheDocument();
     });
