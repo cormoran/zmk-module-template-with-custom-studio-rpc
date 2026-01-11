@@ -1,12 +1,13 @@
-# ZMK Module Template - Web Frontend
+# ZMK Battery History - Web Frontend
 
-This is a minimal web application template for interacting with ZMK firmware
-modules that implement custom Studio RPC subsystems.
+This is a custom web application for interacting with the ZMK battery history
+module over the custom Studio RPC subsystem.
 
 ## Features
 
 - **Device Connection**: Connect to ZMK devices via Bluetooth (GATT) or Serial
-- **Custom RPC**: Communicate with your custom firmware module using protobuf
+- **Battery History**: Display battery consumption trends over time
+- **Custom RPC**: Communicate with the battery history firmware module using protobuf
 - **React + TypeScript**: Modern web development with Vite for fast builds
 - **react-zmk-studio**: Uses the `@cormoran/zmk-studio-react-hook` library for
   simplified ZMK integration
@@ -35,34 +36,36 @@ npm test
 ```
 src/
 ├── main.tsx              # React entry point
-├── App.tsx               # Main application with connection UI
-├── App.css               # Styles
+├── App.tsx               # Main application with battery history UI
+├── App.css               # Styles for the dashboard
 └── proto/                # Generated protobuf TypeScript types
-    └── zmk/template/
+    └── zmk/battery_history/
         └── custom.ts
 
 test/
-├── App.spec.tsx              # Tests for App component
-└── RPCTestSection.spec.tsx   # Tests for RPC functionality
+├── App.spec.tsx                     # Tests for App component
+└── BatteryHistorySection.spec.tsx   # Tests for battery history UI
 ```
 
 ## How It Works
 
 ### 1. Protocol Definition
 
-The protobuf schema is defined in `../proto/zmk/template/custom.proto`:
+The protobuf schema is defined in `../proto/zmk/battery_history/custom.proto`:
 
 ```proto
 message Request {
     oneof request_type {
-        SampleRequest sample = 1;
+        GetHistoryRequest get_history = 1;
+        ClearHistoryRequest clear_history = 2;
     }
 }
 
 message Response {
     oneof response_type {
         ErrorResponse error = 1;
-        SampleResponse sample = 2;
+        HistoryResponse history = 2;
+        ClearHistoryResponse clear_history = 3;
     }
 }
 ```
@@ -88,7 +91,7 @@ import { useZMKApp, ZMKCustomSubsystem } from "@cormoran/zmk-studio-react-hook";
 const { state, connect, findSubsystem, isConnected } = useZMKApp();
 
 // Find your subsystem
-const subsystem = findSubsystem("zmk__template");
+const subsystem = findSubsystem("zmk__battery_history");
 
 // Create service and make RPC calls
 const service = new ZMKCustomSubsystem(state.connection, subsystem.index);
@@ -97,7 +100,7 @@ const response = await service.callRPC(payload);
 
 ## Testing
 
-This template includes Jest tests as a reference implementation for template users.
+This UI includes Jest tests as a reference implementation.
 
 ### Running Tests
 
@@ -117,8 +120,8 @@ npm run test:coverage
 The tests demonstrate how to use the `react-zmk-studio` test helpers:
 
 - **App.spec.tsx**: Basic rendering tests for the main application
-- **RPCTestSection.spec.tsx**: Tests showing how to mock ZMK connection and test
-  components that interact with devices
+- **BatteryHistorySection.spec.tsx**: Tests showing how to mock ZMK connection
+  and test components that interact with devices
 
 ### Writing Tests
 
@@ -133,7 +136,7 @@ import {
 // Create a mock connected device with subsystems
 const mockZMKApp = createConnectedMockZMKApp({
   deviceName: "Test Device",
-  subsystems: ["zmk__template"],
+  subsystems: ["zmk__battery_history"],
 });
 
 // Wrap your component with the provider
@@ -148,10 +151,10 @@ See the test files in `./test/` for complete examples.
 
 ## Customization
 
-To adapt this template for your own ZMK module:
+To adapt the UI for your own module:
 
-1. **Update the proto file**: Modify `../proto/zmk/template/custom.proto` with
-   your message types
+1. **Update the proto file**: Modify `../proto/zmk/battery_history/custom.proto`
+   with your message types
 2. **Regenerate types**: Run `npm run generate`
 3. **Update subsystem identifier**: Change `SUBSYSTEM_IDENTIFIER` in `App.tsx`
    to match your firmware registration

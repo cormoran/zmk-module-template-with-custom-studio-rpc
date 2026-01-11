@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package zmk.battery_history;
+
+message GetHistoryRequest {
+    uint32 max_entries = 1;
+}
+
+message ClearHistoryRequest {}
+
+message BatterySample {
+    uint32 timestamp_seconds = 1;
+    uint32 level_percent = 2;
+}
+
+message HistoryResponse {
+    uint32 sample_interval_seconds = 1;
+    uint32 capacity = 2;
+    uint32 total_entries = 3;
+    repeated BatterySample samples = 4;
+}
+
+message ClearHistoryResponse {
+    bool success = 1;
+}
+
+message Request {
+    oneof request_type {
+        GetHistoryRequest get_history = 1;
+        ClearHistoryRequest clear_history = 2;
+    }
+}
+
+message ErrorResponse {
+    string message = 1;
+}
+
+message Response {
+    oneof response_type {
+        ErrorResponse error = 1;
+        HistoryResponse history = 2;
+        ClearHistoryResponse clear_history = 3;
+    }
+}

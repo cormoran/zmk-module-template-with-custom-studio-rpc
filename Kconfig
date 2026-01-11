@@ -1,10 +1,26 @@
-config ZMK_TEMPLATE_FEATURE
-    bool "Enable template feature"
+config ZMK_BATTERY_HISTORY
+    bool "Enable battery history module"
 
-if ZMK_TEMPLATE_FEATURE
+if ZMK_BATTERY_HISTORY
 
-config ZMK_TEMPLATE_FEATURE_STUDIO_RPC
-    bool "Enable template feature custom Studio RPC"
+config ZMK_BATTERY_HISTORY_STUDIO_RPC
+    bool "Enable battery history custom Studio RPC"
     depends on ZMK_STUDIO
+
+config ZMK_BATTERY_HISTORY_SAMPLE_INTERVAL_SECONDS
+    int "Battery history sampling interval (seconds)"
+    default 900
+    range 60 86400
+    help
+      The interval between battery history samples. Lower values give more
+      accuracy but collect more data. Stored in RAM only to avoid flash wear.
+
+config ZMK_BATTERY_HISTORY_MAX_ENTRIES
+    int "Maximum number of battery history samples"
+    default 96
+    range 8 256
+    help
+      Maximum number of samples retained in RAM. Older samples are dropped
+      when the buffer reaches this size.
 
 endif
