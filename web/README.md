@@ -1,15 +1,16 @@
-# ZMK Module Template - Web Frontend
+# ZMK Key Diagnostics - Web Frontend
 
-This is a minimal web application template for interacting with ZMK firmware
-modules that implement custom Studio RPC subsystems.
+This is a web application for interacting with the ZMK Key Diagnostics module
+via the custom Studio RPC subsystem.
 
 ## Features
 
 - **Device Connection**: Connect to ZMK devices via Bluetooth (GATT) or Serial
-- **Custom RPC**: Communicate with your custom firmware module using protobuf
+- **Custom RPC**: Fetch diagnostics data from the firmware module using protobuf
 - **React + TypeScript**: Modern web development with Vite for fast builds
 - **react-zmk-studio**: Uses the `@cormoran/zmk-studio-react-hook` library for
   simplified ZMK integration
+- **Key Diagnostics UI**: Heatmap and table views for chattering keys
 
 ## Quick Start
 
@@ -38,31 +39,33 @@ src/
 ├── App.tsx               # Main application with connection UI
 ├── App.css               # Styles
 └── proto/                # Generated protobuf TypeScript types
-    └── zmk/template/
+    └── zmk/key_diagnostics/
         └── custom.ts
 
 test/
-├── App.spec.tsx              # Tests for App component
-└── RPCTestSection.spec.tsx   # Tests for RPC functionality
+├── App.spec.tsx                   # Tests for App component
+└── DiagnosticsSection.spec.tsx    # Tests for diagnostics RPC flow
 ```
 
 ## How It Works
 
 ### 1. Protocol Definition
 
-The protobuf schema is defined in `../proto/zmk/template/custom.proto`:
+The protobuf schema is defined in `../proto/zmk/key_diagnostics/custom.proto`:
 
 ```proto
 message Request {
     oneof request_type {
-        SampleRequest sample = 1;
+        GetDiagnosticsRequest get_report = 1;
+        ResetDiagnosticsRequest reset = 2;
     }
 }
 
 message Response {
     oneof response_type {
         ErrorResponse error = 1;
-        SampleResponse sample = 2;
+        DiagnosticsReport diagnostics = 2;
+        ResetDiagnosticsResponse reset = 3;
     }
 }
 ```
@@ -88,7 +91,7 @@ import { useZMKApp, ZMKCustomSubsystem } from "@cormoran/zmk-studio-react-hook";
 const { state, connect, findSubsystem, isConnected } = useZMKApp();
 
 // Find your subsystem
-const subsystem = findSubsystem("zmk__template");
+const subsystem = findSubsystem("zmk__key_diagnostics");
 
 // Create service and make RPC calls
 const service = new ZMKCustomSubsystem(state.connection, subsystem.index);
@@ -97,7 +100,7 @@ const response = await service.callRPC(payload);
 
 ## Testing
 
-This template includes Jest tests as a reference implementation for template users.
+This project includes Jest tests as a reference implementation for module users.
 
 ### Running Tests
 
@@ -117,8 +120,8 @@ npm run test:coverage
 The tests demonstrate how to use the `react-zmk-studio` test helpers:
 
 - **App.spec.tsx**: Basic rendering tests for the main application
-- **RPCTestSection.spec.tsx**: Tests showing how to mock ZMK connection and test
-  components that interact with devices
+- **DiagnosticsSection.spec.tsx**: Tests showing how to mock ZMK connection and
+  validate diagnostics rendering
 
 ### Writing Tests
 
@@ -133,7 +136,7 @@ import {
 // Create a mock connected device with subsystems
 const mockZMKApp = createConnectedMockZMKApp({
   deviceName: "Test Device",
-  subsystems: ["zmk__template"],
+  subsystems: ["zmk__key_diagnostics"],
 });
 
 // Wrap your component with the provider
@@ -148,10 +151,10 @@ See the test files in `./test/` for complete examples.
 
 ## Customization
 
-To adapt this template for your own ZMK module:
+To adapt this UI for your own ZMK module:
 
-1. **Update the proto file**: Modify `../proto/zmk/template/custom.proto` with
-   your message types
+1. **Update the proto file**: Modify `../proto/zmk/key_diagnostics/custom.proto`
+   with your message types
 2. **Regenerate types**: Run `npm run generate`
 3. **Update subsystem identifier**: Change `SUBSYSTEM_IDENTIFIER` in `App.tsx`
    to match your firmware registration

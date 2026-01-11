@@ -1,0 +1,9 @@
+# Nanopb options file for custom.proto
+# This defines max sizes for string fields
+
+zmk.key_diagnostics.ErrorResponse.message max_size:96
+zmk.key_diagnostics.DiagnosticsReport.layout_name max_size:64
+zmk.key_diagnostics.GpioPin.port max_size:32
+
+zmk.key_diagnostics.DiagnosticsReport.physical_keys max_count:200
+zmk.key_diagnostics.DiagnosticsReport.keys max_count:200
