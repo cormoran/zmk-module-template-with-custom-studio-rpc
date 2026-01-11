@@ -33,5 +33,5 @@ jobs:
         with:
             source_repo_path: cormoran/zmk-module-template-with-custom-studio-rpc
             upstream_branch: main # defaults to main
-            source_gh_token: ${{ secrets.GITHUB_TOKEN }}
+            source_gh_token: ${{ secrets.GH_TOKEN }}
             # pr_labels: <label1>,<label2>[,...] # defaults to template
