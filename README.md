@@ -76,6 +76,40 @@ You can use this zmk-module with below setup.
 
 ## Development Guide
 
+### Pre-commit Hooks
+
+This repository uses [pre-commit](https://pre-commit.com/) hooks to ensure code quality before commits. The hooks automatically check and fix:
+
+- Trailing whitespace
+- End of file fixes
+- YAML syntax
+- Large files
+- Merge conflicts
+- **Web code**: Prettier formatting, ESLint linting, Jest tests
+- **ZMK module**: Python unit tests
+
+**Setup pre-commit hooks:**
+
+```bash
+# Install pre-commit (if not already installed)
+pip install pre-commit
+
+# Install the git hooks
+pre-commit install
+```
+
+**Running pre-commit manually:**
+
+```bash
+# Run on all files
+pre-commit run --all-files
+
+# Run on staged files only (happens automatically on commit)
+pre-commit run
+```
+
+The pre-commit hooks are automatically configured in the Copilot GitHub Actions environment and will run on all commits in CI.
+
 ### Setup
 
 There are two west workspace layout options.
