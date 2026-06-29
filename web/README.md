@@ -28,6 +28,12 @@ npm run build
 
 # Run tests
 npm test
+
+# List serial ports for CLI RPC testing
+npm run cli -- ports
+
+# Send SampleRequest from Node without opening the browser
+npm run cli -- sample --port <target-studio-port>
 ```
 
 ## Project Structure
@@ -37,13 +43,20 @@ src/
 ├── main.tsx              # React entry point
 ├── App.tsx               # Main application with connection UI
 ├── App.css               # Styles
+├── templateRpc.ts        # Shared template request/response helpers
+├── studioCustomRpc.ts    # Minimal Studio custom RPC framing for Node CLI
 └── proto/                # Generated protobuf TypeScript types
     └── your-name/template/
         └── template.ts
 
+cli/
+└── template-rpc-client.ts    # Node CLI for serial Studio RPC checks
+
 test/
 ├── App.spec.tsx              # Tests for App component
-└── RPCTestSection.spec.tsx   # Tests for RPC functionality
+├── RPCTestSection.spec.tsx   # Tests for RPC functionality
+├── studioCustomRpc.spec.ts   # Tests for Studio custom RPC framing
+└── templateRpc.spec.ts       # Tests for shared template RPC helpers
 ```
 
 ## How It Works
@@ -79,6 +92,21 @@ const subsystem = findSubsystem("your_name__template");
 const service = new ZMKCustomSubsystem(state.connection, subsystem.index);
 const response = await service.callRPC(payload);
 ```
+
+### 4. Using the Node CLI
+
+The Node CLI shares `src/templateRpc.ts` and the generated protobuf types with
+the React UI. Use it for hardware checks where a browser is inconvenient:
+
+```bash
+npm run cli -- ports
+npm run cli -- subsystems --port <target-studio-port>
+npm run cli -- sample --port <target-studio-port> --value 42 --large-size 96
+```
+
+The large sample sends a deterministic payload and validates the response
+payload size/checksum. Keep `--large-size` within the firmware's configured RPC
+buffer limits.
 
 ## Testing
 
@@ -122,8 +150,9 @@ To adapt this template for your own ZMK module:
 1. **Update the proto file**: Modify `../proto/your-name/template/template.proto` with
    your message types
 2. **Regenerate types**: Run `npm run generate`
-3. **Update subsystem identifier**: Change `SUBSYSTEM_IDENTIFIER` in `App.tsx`
-   to match your firmware registration
-4. **Update RPC logic**: Modify the request/response handling in `App.tsx`
+3. **Update subsystem identifier**: Change `SUBSYSTEM_IDENTIFIER` in
+   `src/templateRpc.ts` to match your firmware registration
+4. **Update RPC logic**: Modify request/response handling in
+   `src/templateRpc.ts` so the UI and Node CLI stay in sync
 5. **Update tests**: Modify tests to match your custom subsystem identifier and
    functionality

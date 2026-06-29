@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify Firmware With J-Link"
+  short_description: "Verify ZMK firmware with J-Link"
+  default_prompt: "Use $verify-firmware-with-jlink to build, flash, probe, and RPC-test a ZMK module on J-Link-connected hardware."

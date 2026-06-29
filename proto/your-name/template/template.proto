@@ -2,9 +2,17 @@ syntax = "proto3";
 
 package your_name.template;
 
-message SampleRequest { int32 value = 1; }
+message SampleRequest {
+    int32 value = 1;
+    bytes payload = 2;
+    uint32 expected_checksum = 3;
+}
 
-message SampleResponse { string value = 1; }
+message SampleResponse {
+    string value = 1;
+    uint32 payload_size = 2;
+    uint32 checksum = 3;
+}
 
 message Request {
     oneof request_type { SampleRequest sample = 1; }

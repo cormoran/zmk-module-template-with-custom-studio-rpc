@@ -97,6 +97,8 @@ class WestCommandsTests(unittest.TestCase):
                         "CONFIG_ZMK_CUSTOM_SETTINGS_STUDIO_RPC=y",
                         "CONFIG_ZMK_STUDIO_RPC_RX_BUF_SIZE=128",
                         "CONFIG_ZMK_LOW_PRIORITY_THREAD_STACK_SIZE=2048",
+                        "CONFIG_HW_STACK_PROTECTION=y",
+                        "CONFIG_THREAD_STACK_INFO=y",
                     ],
                     device=[],
                 ),

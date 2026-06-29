@@ -1,5 +1,6 @@
 #include <pb_decode.h>
 #include <pb_encode.h>
+#include <stdint.h>
 #include <zephyr/sys/util.h>
 #include <zmk/studio/custom.h>
 #include <your-name/template/template.pb.h>
@@ -32,6 +33,7 @@ ZMK_CUSTOM_SETTING_DEFINE(template_sample_bool, "your_name__template", "sample_b
 
 static int handle_sample_request(const your_name_template_SampleRequest *req,
                                  your_name_template_Response *resp);
+static uint32_t checksum_payload(const pb_byte_t *bytes, pb_size_t size);
 
 static bool template_rpc_handle_request(const zmk_custom_CallRequest *raw_request,
                                         pb_callback_t *encode_response) {
@@ -78,7 +80,30 @@ static int handle_sample_request(const your_name_template_SampleRequest *req,
 
     snprintf(result.value, sizeof(result.value), "Hello from firmware! Received: %d", req->value);
 
+    uint32_t checksum = checksum_payload(req->payload.bytes, req->payload.size);
+    LOG_DBG("Received sample request payload with size: %u, checksum: %u",
+            (unsigned int)req->payload.size, checksum);
+
+    if (checksum != req->expected_checksum) {
+        LOG_WRN("Sample request payload checksum mismatch: expected %u, actual %u",
+                req->expected_checksum, checksum);
+        return -1;
+    }
+
+    result.payload_size = req->payload.size;
+    result.checksum = checksum;
+
     resp->which_response_type = your_name_template_Response_sample_tag;
     resp->response_type.sample = result;
     return 0;
+}
+
+static uint32_t checksum_payload(const pb_byte_t *bytes, pb_size_t size) {
+    uint32_t checksum = 0;
+
+    for (pb_size_t i = 0; i < size; i++) {
+        checksum = (checksum + bytes[i]) & UINT32_MAX;
+    }
+
+    return checksum;
 }

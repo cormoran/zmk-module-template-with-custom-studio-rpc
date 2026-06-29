@@ -6,9 +6,13 @@ import {
   ZMKCustomSubsystem,
   ZMKAppContext,
 } from "@cormoran/zmk-studio-react-hook";
-import { Request, Response } from "./proto/your-name/template/template";
+import {
+  decodeSampleResponse,
+  encodeSampleRequest,
+  SUBSYSTEM_IDENTIFIER,
+} from "./templateRpc";
 
-export const SUBSYSTEM_IDENTIFIER = "your_name__template";
+export { SUBSYSTEM_IDENTIFIER };
 
 function App() {
   return (
@@ -86,24 +90,13 @@ export function RPCTestSection() {
         subsystem.index
       );
 
-      const request = Request.create({
-        sample: {
-          value: inputValue,
-        },
-      });
-
-      const payload = Request.encode(request).finish();
-      const responsePayload = await service.callRPC(payload);
+      const request = encodeSampleRequest(inputValue);
+      const responsePayload = await service.callRPC(request.payload);
 
       if (responsePayload) {
-        const resp = Response.decode(responsePayload);
+        const resp = decodeSampleResponse(responsePayload);
         console.log("Decoded response:", resp);
-
-        if (resp.sample) {
-          setResponse(resp.sample.value);
-        } else if (resp.error) {
-          setResponse(`Error: ${resp.error.message}`);
-        }
+        setResponse(resp.value);
       }
     } catch (error) {
       console.error("RPC call failed:", error);

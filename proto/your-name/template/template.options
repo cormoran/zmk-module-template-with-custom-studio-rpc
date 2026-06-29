@@ -3,3 +3,4 @@
 
 your_name.template.SampleResponse.value    max_size:64
 your_name.template.ErrorResponse.message   max_size:64
+your_name.template.SampleRequest.payload   max_size:96
