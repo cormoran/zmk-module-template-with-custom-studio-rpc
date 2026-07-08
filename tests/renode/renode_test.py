@@ -32,46 +32,47 @@ section for the full story):
     first (and, in this stock template, only) registered subsystem, i.e.
     index 0.
 
-*** KNOWN FIRMWARE BUG, discovered by this test suite (2026-07-08) ***
-Bringing this test up found a genuine, reproducible bug in the vendored
-"custom-studio-protocol" ZMK fork this template depends on (NOT a Renode
-artifact -- confirmed with careful byte-paced UART delivery and Renode
-CPU-instruction-count sampling to rule out timing/transport causes; see
-the zmk-workspace PR that added this test for the full writeup):
+*** KNOWN RENODE-ENVIRONMENT LIMITATION, found by this test suite (2026-07-08) ***
+Under Renode -- and, as far as we know, ONLY under Renode; the same code
+path is hardware-validated in zmk-feature-studio-rpc-perf -- Studio RPC
+responses that go through a *registered* custom subsystem's callback-based
+response encoding (`ZMK_RPC_CUSTOM_SUBSYSTEM_RESPONSE_BUFFER_ALLOCATE` /
+`zmk_rpc_custom_subsystem_encode_response_payload`) stop being delivered
+once the response grows past a few tens of bytes, or after a couple of
+successful smaller round trips:
 
-  Any Studio RPC response that goes through a *registered* custom
-  subsystem's callback-based response encoding
-  (`ZMK_RPC_CUSTOM_SUBSYSTEM_RESPONSE_BUFFER_ALLOCATE` /
-  `zmk_rpc_custom_subsystem_encode_response_payload`,
-  dependencies/zmk/app/include/zmk/studio/custom.h +
-  dependencies/zmk/app/src/studio/custom_subsystem.c) makes the
-  `studio_rpc_thread` spin forever inside `rpc_tx_buffer_write`'s
-  `ring_buf_put_claim`/`ring_buf_put_finish` loop
-  (dependencies/zmk/app/src/studio/rpc.c) -- confirmed via Renode monitor
-  `sysbus.cpu ExecutedInstructions` growing at a steady ~5*10^8/s (a genuine
-  busy spin, not a blocked/sleeping thread) and `sysbus.cpu PC` sampled
-  repeatedly inside `ring_buf_area_claim`/`ring_buf_area_finish`
-  (dependencies/zephyr/lib/utils/ring_buffer.c). This reproduces for BOTH
-  a real successful SampleResponse *and* this module's own small
-  ErrorResponse (the decode-failure path) -- i.e. it is not about response
-  size, only about whether a *real* registered subsystem's callback
-  encoding path is exercised at all. `custom.call` to a subsystem index
-  that does *not* exist takes a different, callback-free "fast path"
-  (`meta.simple_error` / RPC_NOT_FOUND) and works fine -- see
-  `test_custom_rpc_invalid_index_dispatch` below, which is a genuine,
-  affirmative proof the custom-subsystem envelope/dispatch machinery works
-  end-to-end (framing, oneof selection, index validation) for everything
-  *except* actually returning a real subsystem's response.
+  - zmk-feature-studio-rpc-perf (SAME vendored ZMK fork commit 618f083,
+    same custom-subsystem macros, validated on real hardware): under
+    Renode, a ~28-byte framed custom response round-trips OK twice, then
+    the third request times out; a first-call response of ~55-65 bytes
+    framed times out immediately.
+  - This template's SampleResponse (~51 bytes framed) and its own
+    ErrorResponse both time out on the very first call.
+  - Small, callback-free responses stay reliable indefinitely: core
+    GetDeviceInfo (~21B; the action's smoke test), and meta.simple_error
+    (~10B; see test_custom_rpc_invalid_index_dispatch below -- a genuine,
+    affirmative proof the custom envelope/dispatch machinery itself works:
+    framing, oneof selection, index validation).
 
-This is a template/protocol-level bug, not something introduced by (or
-fixable from) this module's own `src/studio/template_handler.c` -- fixing
-it means patching vendored `dependencies/zmk/app/src/studio/rpc.c`, which
-is out of scope for a module template's own test file. Per this project's
-own convention for documented-but-not-chased-further findings (see
-zmk-workspace's test-zmk-renode skill, T3/BLE), the real end-to-end round
-trip is captured below as a test that asserts the *known failure*
-(so a future fix will make it visibly start failing, prompting an update)
-rather than silently skipped.
+During the hang the firmware is NOT crashed: Renode's
+`sysbus.cpu ExecutedInstructions` keeps growing steadily and
+`sysbus.cpu PC` samples land inside `ring_buf_area_claim`/
+`ring_buf_area_finish` (dependencies/zephyr/lib/utils/ring_buffer.c),
+consistent with the studio RPC TX path waiting on a TX ring buffer that
+never drains. Ruled out individually: request-delivery timing (byte-paced
+UART sends behave identically), CONFIG_ZMK_STUDIO_RPC_RX_BUF_SIZE (30 vs
+128), CONFIG_ZMK_STUDIO_RPC_TX_BUF_SIZE (64 vs 256, verified in .config),
+and always-enabling the TX IRQ in the Renode UART transport module. The
+precise mechanism (most plausibly an interaction between rpc.c's
+tx_notify batching heuristics and Renode's nRF52840 UARTE TX-interrupt
+model) was deliberately not chased further -- it does not affect real
+hardware, and fixing it means emulator/harness work, not module work.
+
+Per this project's own convention for documented-but-not-chased-further
+findings (see zmk-workspace's test-zmk-renode skill, T3/BLE), the real
+end-to-end round trip is captured below as a test that asserts the *known
+failure under Renode* (so a future harness/emulator fix will make it
+visibly start failing, prompting an update) rather than silently skipped.
 
 Run locally (from this repo's root, with a west workspace already set up --
 see README.md):
@@ -116,10 +117,11 @@ except ImportError:  # pragma: no cover - convenience fallback for local dev
 
 SUBSYSTEM_IDENTIFIER = "your_name__template"
 # This template registers exactly one custom subsystem, so its index is
-# deterministically 0 -- but see the KNOWN FIRMWARE BUG note above:
-# `ListCustomSubsystemRequest` (the normal way to discover this at runtime)
-# hits the very same bug and hangs too, so this test hardcodes the index
-# rather than discovering it.
+# deterministically 0 -- but see the KNOWN RENODE-ENVIRONMENT LIMITATION
+# note above: `ListCustomSubsystemRequest` (the normal way to discover this
+# at runtime) returns a large response (identifier + UI URL, ~80+ bytes,
+# well past the observed size threshold) and so also times out under
+# Renode; this test hardcodes the index rather than discovering it.
 KNOWN_SUBSYSTEM_INDEX = 0
 # Always out of range regardless of how many custom subsystems a given
 # module registers -- used to exercise the *working* fast-path dispatch
@@ -194,9 +196,9 @@ class RenodeTemplateModuleTests(unittest.TestCase):
         whole custom-subsystem *envelope* round-trips correctly end to end
         (Request.custom oneof selection, CallRequest field encoding,
         subsystem-count/index validation, meta.simple_error response
-        encoding/decoding) -- everything except actually reaching a real
-        subsystem's handler, which hits the known bug documented in this
-        file's module docstring."""
+        encoding/decoding) -- everything except actually returning a real
+        subsystem's (larger) response, which hits the known Renode-only
+        limitation documented in this file's module docstring."""
         self._send_call(INVALID_SUBSYSTEM_INDEX, b"", request_id=7)
 
         resp_bytes = self.rpc.read_frame(timeout=10.0)
@@ -210,19 +212,20 @@ class RenodeTemplateModuleTests(unittest.TestCase):
         # zmk.meta.ErrorConditions.RPC_NOT_FOUND == 2
         self.assertEqual(resp.request_response.meta.simple_error, 2)
 
-    # -- Known bug: documented, asserted, not silently skipped -----------
+    # -- Known Renode limitation: documented, asserted, not silently skipped --
 
-    def test_custom_rpc_sample_round_trip_KNOWN_BROKEN(self):
-        """Documents the known firmware bug (see this file's module
-        docstring): sending a real SampleRequest to this module's own
-        registered subsystem (index 0) should get back a SampleResponse
-        with `"Hello from firmware! Received: 42"` (see
-        handle_sample_request() in src/studio/template_handler.c) -- but
-        currently the RPC thread spins forever inside the vendored ZMK
-        `rpc_tx_buffer_write()` and no response is ever sent. This test
-        asserts *that exact failure* (a read timeout) so it will start
-        failing -- loudly, as a signal to update this test -- the day the
-        underlying vendored bug is fixed upstream."""
+    def test_custom_rpc_sample_round_trip_KNOWN_BROKEN_UNDER_RENODE(self):
+        """Documents the known Renode-environment limitation (see this
+        file's module docstring): sending a real SampleRequest to this
+        module's own registered subsystem (index 0) should get back a
+        SampleResponse with `"Hello from firmware! Received: 42"` (see
+        handle_sample_request() in src/studio/template_handler.c) -- and
+        does, on real hardware -- but under Renode the ~51-byte response
+        never arrives (RPC TX path stalls; smaller callback-free responses
+        are unaffected). This test asserts *that exact failure* (a read
+        timeout) so it will start failing -- loudly, as a signal to update
+        this test to assert the real round trip -- the day the underlying
+        emulation/harness limitation is fixed."""
         inner_req = self.template_pb2.Request()
         inner_req.sample.value = 42
         self._send_call(KNOWN_SUBSYSTEM_INDEX, inner_req.SerializeToString())
@@ -230,8 +233,8 @@ class RenodeTemplateModuleTests(unittest.TestCase):
         resp_bytes = self.rpc.read_frame(timeout=10.0)
         self.assertIsNone(
             resp_bytes,
-            "custom.call to the real registered subsystem got a response -- the known "
-            "vendored-zmk RPC-TX-encoding bug documented in this file's module docstring "
+            "custom.call to the real registered subsystem got a response under Renode -- "
+            "the known Renode-only limitation documented in this file's module docstring "
             "appears to be fixed! Update this test to assert the real SampleResponse "
             "round-trip instead (see test_custom_rpc_invalid_index_dispatch for the "
             "request-building pattern), and consider re-adding subsystem discovery via "

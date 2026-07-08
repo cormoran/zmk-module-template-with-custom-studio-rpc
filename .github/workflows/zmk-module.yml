@@ -72,7 +72,7 @@ jobs:
       # zmk-workspace merges). Bump this SHA whenever a fix lands on
       # zmk-workspace's claude/renode-ci-action branch.
       # TODO: repoint to @main after the zmk-workspace PR merges.
-      - uses: cormoran/zmk-workspace/.github/actions/zmk-renode-test@fcfde679d52e4ca6fde18bd3efaaf2fbec160fd3
+      - uses: cormoran/zmk-workspace/.github/actions/zmk-renode-test@83ce33a807ac6111a47d422097a15896a0be5443
         with:
           west-topdir: ${{ github.workspace }}
           shield: tester_xiao
