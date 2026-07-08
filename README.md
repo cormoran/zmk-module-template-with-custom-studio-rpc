@@ -154,6 +154,51 @@ west zmk-test tests -m .
 cd web && npm test
 ```
 
+### Hardware-free Renode testing
+
+CI also boots this module's firmware in the [Renode](https://renode.io/)
+emulator (no physical board needed) and exercises it functionally: the real
+ZMK boot banner, a core Studio RPC `GetDeviceInfo` round trip, and this
+module's own custom Studio RPC subsystem. See the `renode-test` job in
+`.github/workflows/zmk-module.yml` -- it's a thin wrapper around a reusable
+action, [`cormoran/zmk-workspace`'s
+`zmk-renode-test`](https://github.com/cormoran/zmk-workspace/tree/main/.github/actions/zmk-renode-test),
+which does the actual Renode install/build/boot/test work.
+
+To reproduce locally, check out `zmk-workspace` as a sibling of this repo
+(or anywhere; adjust the path below) and run:
+
+```bash
+# 1. Build a Renode-testable ELF (Studio-RPC-over-UART overlay + the
+#    Renode-only transport that bypasses the USB-gated real one --
+#    real hardware still uses the studio-rpc-usb-uart snippet as normal).
+python3 ../zmk-workspace/skills/test-zmk-renode/scripts/build_fw.py \
+  --west-topdir "$PWD" \
+  --shield tester_xiao \
+  --zmk-config "$PWD/tests/zmk-config/config" \
+  --module-path "$PWD" \
+  --module-path "$PWD/tests/zmk-config" \
+  --cmake-arg=-DCONFIG_ZMK_STUDIO=y \
+  --cmake-arg=-DCONFIG_ZMK_TEMPLATE_FEATURE=y \
+  --cmake-arg=-DCONFIG_ZMK_TEMPLATE_FEATURE_STUDIO_RPC=y
+
+# 2. Generic smoke test (boot banner + core Studio RPC).
+python3 ../zmk-workspace/skills/test-zmk-renode/scripts/renode_smoke.py \
+  --elf build/renode_generic/zephyr/zmk.elf --west-topdir "$PWD"
+
+# 3. This module's own Renode test (custom Studio RPC subsystem).
+ZMK_RENODE_ELF="$PWD/build/renode_generic/zephyr/zmk.elf" \
+PYTHONPATH="../zmk-workspace/skills/test-zmk-renode/scripts" \
+python3 tests/renode/renode_test.py -v
+```
+
+To adapt `tests/renode/renode_test.py` for your own module: it imports
+`renode_harness` (from the `zmk-workspace` checkout, via `PYTHONPATH`) for
+all the Renode/RPC plumbing, reads the built ELF's path from
+`ZMK_RENODE_ELF`, and only needs to know your module's own custom-subsystem
+identifier and proto messages -- see the file's own module docstring for
+how the `zmk.custom` envelope (subsystem discovery/addressing) works.
+
 ### Sync changes from template
 
 Run `Actions > Sync Changes in Template > Run workflow` to get the latest template changes as a pull request.
