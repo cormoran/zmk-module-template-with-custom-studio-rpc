@@ -58,6 +58,34 @@ jobs:
           path: |
             build/*/zephyr/zmk.uf2
 
+  renode-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: zmkfirmware/zmk-build-arm:stable
+    name: Renode test (hardware-free)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/west-init
+      # Pinned by commit SHA (immutable, works even before any PR into
+      # zmk-workspace merges). Bump this SHA whenever a fix lands on
+      # zmk-workspace's claude/renode-ci-action branch.
+      # TODO: repoint to @main after the zmk-workspace PR merges.
+      - uses: cormoran/zmk-workspace/.github/actions/zmk-renode-test@91bb251df409a738a60d1d1ccf1283378c3c89d0
+        with:
+          west-topdir: ${{ github.workspace }}
+          shield: tester_xiao
+          zmk-config: ${{ github.workspace }}/tests/zmk-config/config
+          module-paths: |
+            ${{ github.workspace }}
+            ${{ github.workspace }}/tests/zmk-config
+          cmake-args: |
+            -DCONFIG_ZMK_STUDIO=y
+            -DCONFIG_ZMK_TEMPLATE_FEATURE=y
+            -DCONFIG_ZMK_TEMPLATE_FEATURE_STUDIO_RPC=y
+          tests: tests/renode
+
   keepalive:
     if: github.event_name == 'schedule'
     permissions: write-all
