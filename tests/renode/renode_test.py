@@ -101,16 +101,29 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # renode_harness comes from the zmk-workspace checkout the action provides
-# on PYTHONPATH. Support running this file directly too (e.g. a developer
-# who has zmk-workspace checked out as a sibling directory) by falling back
-# to a conventional relative location.
+# on PYTHONPATH. Support running this file directly too by falling back to
+# conventional relative locations: first the zmk-workspace west dependency
+# this repo now has (west/west-dependency/west-test-dependency.yml --
+# nicer than requiring a sibling checkout, since `west update` already
+# fetches it), then a sibling `zmk-workspace` checkout next to this repo.
 try:
     import renode_harness
 except ImportError:  # pragma: no cover - convenience fallback for local dev
-    fallback = REPO_ROOT.parent / "zmk-workspace" / "skills" / "test-zmk-renode" / "scripts"
-    if fallback.is_dir():
-        sys.path.insert(0, str(fallback))
-        import renode_harness
+    fallback_candidates = [
+        REPO_ROOT
+        / "dependencies"
+        / "zmk-workspace"
+        / "skills"
+        / "test-zmk-renode"
+        / "scripts",
+        REPO_ROOT.parent / "zmk-workspace" / "skills" / "test-zmk-renode" / "scripts",
+    ]
+    for fallback in fallback_candidates:
+        if fallback.is_dir():
+            sys.path.insert(0, str(fallback))
+            import renode_harness
+
+            break
     else:
         raise
 
@@ -143,7 +156,9 @@ class RenodeTemplateModuleTests(unittest.TestCase):
     def setUpClass(cls):
         cls.renode_path = renode_harness.find_or_install_renode()
         if cls.renode_path is None:
-            raise unittest.SkipTest("Renode is not installed and could not be auto-installed")
+            raise unittest.SkipTest(
+                "Renode is not installed and could not be auto-installed"
+            )
 
         elf_env = os.environ.get("ZMK_RENODE_ELF")
         if not elf_env:
@@ -174,13 +189,19 @@ class RenodeTemplateModuleTests(unittest.TestCase):
         cls.template_pb2 = template_pb2
 
     def setUp(self):
-        self.session, self.console, self.rpc = renode_harness.boot_single(self.renode_path, self.elf)
+        self.session, self.console, self.rpc = renode_harness.boot_single(
+            self.renode_path, self.elf
+        )
         self.addCleanup(self.session.stop)
         self.addCleanup(self.console.close)
         self.addCleanup(self.rpc.close)
 
-        banner = renode_harness.wait_for_text(self.console._sock, "Welcome to ZMK", timeout=15)
-        self.assertIn("Welcome to ZMK", banner, f"never saw ZMK boot banner; got:\n{banner}")
+        banner = renode_harness.wait_for_text(
+            self.console._sock, "Welcome to ZMK", timeout=15
+        )
+        self.assertIn(
+            "Welcome to ZMK", banner, f"never saw ZMK boot banner; got:\n{banner}"
+        )
 
     def _send_call(self, subsystem_index: int, payload: bytes, request_id: int = 1):
         req = self.studio_pb2.Request()
@@ -202,13 +223,17 @@ class RenodeTemplateModuleTests(unittest.TestCase):
         self._send_call(INVALID_SUBSYSTEM_INDEX, b"", request_id=7)
 
         resp_bytes = self.rpc.read_frame(timeout=10.0)
-        self.assertIsNotNone(resp_bytes, "no response to custom.call with an invalid index (timeout)")
+        self.assertIsNotNone(
+            resp_bytes, "no response to custom.call with an invalid index (timeout)"
+        )
         resp = self.studio_pb2.Response()
         resp.ParseFromString(resp_bytes)
         self.assertEqual(resp.WhichOneof("type"), "request_response")
         self.assertEqual(resp.request_response.request_id, 7)
         self.assertEqual(resp.request_response.WhichOneof("subsystem"), "meta")
-        self.assertEqual(resp.request_response.meta.WhichOneof("response_type"), "simple_error")
+        self.assertEqual(
+            resp.request_response.meta.WhichOneof("response_type"), "simple_error"
+        )
         # zmk.meta.ErrorConditions.RPC_NOT_FOUND == 2
         self.assertEqual(resp.request_response.meta.simple_error, 2)
 

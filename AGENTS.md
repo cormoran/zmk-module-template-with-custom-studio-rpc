@@ -78,6 +78,10 @@ cd web && npm test
 python3 scripts/init_module.py --verify-only
 # Hardware-free Renode test (boot, core Studio RPC, this module's custom
 # RPC) -- see README.md's "Hardware-free Renode testing" section for the
-# full build+run sequence; needs a zmk-workspace checkout for the harness.
+# full build+run sequence. Needs the renode_smoke_test build.yaml artifact
+# built first (`west zmk-build tests/zmk-config -af renode`, or just let
+# `python3 -m unittest` build everything); the harness comes from the
+# zmk-workspace west dependency (dependencies/zmk-workspace), fetched by
+# the usual `west update`.
 python3 tests/renode/renode_test.py -v
 ```
