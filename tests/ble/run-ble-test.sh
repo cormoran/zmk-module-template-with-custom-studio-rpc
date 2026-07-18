@@ -186,7 +186,11 @@ done < "$testcase/siblings.txt"
 
 popd > /dev/null 2>&1
 
-sed -E -n -f "$testcase/events.patterns" < "$case_build/output.log" > "$case_build/filtered_output.log"
+# Group lines by device (stable sort keeps each device's own order) before
+# filtering: the combined log interleaves devices in wall-clock order, which
+# is not deterministic across runs, while each device's own stream is.
+sort -s -t ':' -k 1,1 "$case_build/output.log" |
+    sed -E -n -f "$testcase/events.patterns" > "$case_build/filtered_output.log"
 
 diff -auZ "$testcase/events.snapshot" "$case_build/filtered_output.log"
 if [ $? -gt 0 ]; then

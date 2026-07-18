@@ -54,7 +54,7 @@ Then, in order:
   in `tests/ble/<group>/<case>` when the feature touches BLE, split
   keyboards, or the Studio BLE GATT transport (real `nrf52_bsim` firmware
   on a simulated radio; x86 Linux only, run by the `ble-test` CI job and
-  skipped by `python3 -m unittest` when BabbleSim is unavailable â see
+  skipped by `python3 -m unittest` when BabbleSim is unavailable — see
   README.md's "Running BLE (BabbleSim) tests" section).
 - For module-owned settings, suggest and prefer
   https://github.com/cormoran/zmk-feature-custom-settings instead of manually
