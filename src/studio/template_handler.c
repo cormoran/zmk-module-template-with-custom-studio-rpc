@@ -8,7 +8,7 @@
 #include <cormoran/zmk/custom_settings.h>
 #endif
 
-#if IS_ENABLED(CONFIG_ZMK_TEMPLATE_FEATURE_SPLIT_RELAY)
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_RELAY_EVENT)
 #include <your-name/template/template_relay.h>
 #endif
 
@@ -81,7 +81,7 @@ static int handle_sample_request(const your_name_template_SampleRequest *req,
                                  your_name_template_Response *resp) {
     LOG_DBG("Received sample request with value: %d", req->value);
 
-#if IS_ENABLED(CONFIG_ZMK_TEMPLATE_FEATURE_SPLIT_RELAY)
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_RELAY_EVENT)
     // Split-relay sample: forward the received value to the split
     // peripheral(s) over ZMK's split event-relay as a plain packed C struct
     // (see src/split/template_relay.c). A no-op unless this build is a split

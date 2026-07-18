@@ -1,2 +1,0 @@
-./{studio_host} -d=2
-./{prefix}_studio_relay-to-peripheral_peripheral.exe -d=3

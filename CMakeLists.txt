@@ -2,10 +2,11 @@ zephyr_include_directories(include)
 if(CONFIG_ZMK_TEMPLATE_FEATURE)
     # target_sources(app PRIVATE ...)
 
-    # Split-relay sample feature. Compiled into BOTH split roles (central and
+    # Split-relay sample feature. Follows ZMK's own relay Kconfig directly (no
+    # module Kconfig of its own): compiled into BOTH split roles (central and
     # peripheral), independently of the Studio RPC subsystem below (only the
     # central runs Studio) -- the peripheral needs the relay listener too.
-    if(CONFIG_ZMK_TEMPLATE_FEATURE_SPLIT_RELAY)
+    if(CONFIG_ZMK_SPLIT_RELAY_EVENT)
         target_sources(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/split/template_relay.c)
     endif()
 

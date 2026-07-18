@@ -44,8 +44,8 @@ ZMK_EVENT_DECLARE(template_relay_sample);
 /*
  * Central-side entry point, called from the Studio RPC handler when a
  * SampleRequest is received. Raises the relay carrier so the direction macro
- * ships it to the peripheral(s). A no-op on non-split builds (no relay
- * listener is compiled there). Only declared/defined when the split-relay
- * sample feature is enabled.
+ * ships it to the peripheral(s). Only compiled (like this whole sample) when
+ * ZMK's CONFIG_ZMK_SPLIT_RELAY_EVENT is enabled -- the sample has no Kconfig
+ * of its own.
  */
 void template_relay_send_sample(int32_t value);

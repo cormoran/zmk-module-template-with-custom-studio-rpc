@@ -9,28 +9,10 @@ GetDeviceInfo round-trip) already ran as the "smoke test" step of the
 `.github/actions/zmk-renode-test/`) before this file even runs. This file
 only needs to know about *this module's own* RPC surface.
 
-How it's wired together (see README.md's "Hardware-free Renode testing"
-section for the full story):
-  - `ZMK_RENODE_ELF` (env var) points at the firmware ELF the action already
-    built with the Renode Studio-RPC-over-UART overlay + transport (real
-    hardware normally carries Studio RPC over USB; Renode's USB model is a
-    non-functional register stub, so testing under emulation swaps in a
-    wired-UART carrier with identical RPC framing -- see zmk-west-commands's
-    README `west zmk-renode-test` section for why).
-  - `renode_harness` (a module from that same zmk-west-commands checkout) is
-    importable via PYTHONPATH -- the action sets this up. It provides
-    RenodeSession/boot_single/wait_for_text/proto compiling, so this file
-    doesn't need to reimplement any of the Renode-specific plumbing.
-  - The custom RPC "envelope": ZMK Studio's `zmk.custom` subsystem is a
-    generic pass-through -- a module's own proto messages travel as opaque
-    `bytes` inside `zmk.custom.CallRequest.payload`/`CallResponse.payload`,
-    addressed by a runtime-assigned `subsystem_index` (see dependencies'
-    zmk-studio-messages proto/zmk/custom.proto). This module registers
-    itself under the fixed string identifier "your_name__template"
-    (src/studio/template_handler.c,
-    `ZMK_RPC_CUSTOM_SUBSYSTEM(your_name__template, ...)`), always as the
-    first (and, in this stock template, only) registered subsystem, i.e.
-    index 0.
+Wiring: `west zmk-renode-test tests/renode --elf <ELF>` sets `ZMK_RENODE_ELF`
+and puts `renode_harness` (zmk-west-commands' scripts/lib/renode) on
+PYTHONPATH -- see README.md's "Hardware-free Renode testing" section and
+zmk-west-commands' README for the rest.
 
 *** KNOWN RENODE-ENVIRONMENT LIMITATION, found by this test suite (2026-07-08) ***
 Under Renode -- and, as far as we know, ONLY under Renode; the same code
@@ -74,21 +56,9 @@ end-to-end round trip is captured below as a test that asserts the *known
 failure under Renode* (so a future harness/emulator fix will make it
 visibly start failing, prompting an update) rather than silently skipped.
 
-Run locally (from this repo's root, with a west workspace already set up --
-see README.md):
-
-    python3 tests/renode/renode_test.py -v
-
-(Named `renode_test.py`, not `test_renode.py`, on purpose: the existing
-`python3 -m unittest -v` build-job step at the repo root auto-discovers
-every `test*.py`, and this file needs a real firmware ELF + PYTHONPATH the
-build job doesn't set up -- keeping it out of that pattern keeps the two
-test surfaces independent. The `zmk-renode-test` action instead runs
-everything under `tests/renode/` explicitly, with `ZMK_RENODE_ELF` and
-PYTHONPATH already set.)
-
-The Renode-testable ELF must already be built; see README.md for the exact
-`west zmk-build` invocation, or let the composite action do it in CI.
+(Named `renode_test.py`, not `test_renode.py`, on purpose: it needs a real
+firmware ELF, so it must stay out of `python3 -m unittest`'s `test*.py`
+auto-discovery.)
 """
 
 from __future__ import annotations

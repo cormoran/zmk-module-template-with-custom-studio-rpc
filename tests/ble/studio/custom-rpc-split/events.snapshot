@@ -29,3 +29,4 @@ host                        0a 2e 08 02 a2 06 29 12  27 12 25 12 23 0a 21 48 |..
 host                        65 6c 6c 6f 20 66 72 6f  6d 20 66 69 72 6d 77 61 |ello fro m firmwa
 host                        72 65 21 20 52 65 63 65  69 76 65 64 3a 20 34 32 |re! Rece ived: 42
 host <dbg> ble_studio_host: handle_frame: [ALL RESPONSES RECEIVED]
+peripheral <dbg> zmk: template_relay_on_sample: Peripheral received relayed sample value: 42 (v1)

@@ -9,7 +9,6 @@ on:
       - .github/workflows/copilot-setup-steps.yml
       - .github/workflows/devcontainer.yml
       - .github/workflows/claude.yml
-      - .github/workflows/codex.yml
       - .github/workflows/template-sync.yml
       - .github/workflows/web-ui.yml
       - .github/actions/zmk-env/**
@@ -24,7 +23,6 @@ on:
       - .github/workflows/copilot-setup-steps.yml
       - .github/workflows/devcontainer.yml
       - .github/workflows/claude.yml
-      - .github/workflows/codex.yml
       - .github/workflows/template-sync.yml
       - .github/workflows/web-ui.yml
       - .github/actions/zmk-env/**

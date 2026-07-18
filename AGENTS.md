@@ -46,16 +46,12 @@ Then, in order:
 - Commit changes at each milestone. Ensure pre-commit works and never bypass
   pre-commit check.
 - Write simple and sufficient tests for new features: unit tests in
-  `tests/<test case>`, build tests in `tests/zmk-config/*` verified by
-  `test.py`, a hardware-free functional test in `tests/renode/` (see
-  README.md's "Hardware-free Renode testing" section) for anything that
-  needs to actually boot and exercise real RPC behavior (Studio RPC,
-  custom subsystems) rather than just compile, and a BLE (BabbleSim) test
-  in `tests/ble/<group>/<case>` when the feature touches BLE, split
-  keyboards, or the Studio BLE GATT transport (real `nrf52_bsim` firmware
-  on a simulated radio; x86 Linux only, run by the `ble-test` CI job and
-  skipped by `python3 -m unittest` when BabbleSim is unavailable — see
-  README.md's "Running BLE (BabbleSim) tests" section).
+  `tests/<test case>`; build tests in `tests/zmk-config/*` verified by
+  `test.py`; a Renode test in `tests/renode/` for anything that must boot
+  and exercise real RPC behavior; a BLE (BabbleSim) test in
+  `tests/ble/<group>/<case>` when the feature touches BLE, split keyboards,
+  or the Studio BLE GATT transport. See README.md's "Hardware-free Renode
+  testing" / "Running BLE (BabbleSim) tests" sections.
 - For module-owned settings, suggest and prefer
   https://github.com/cormoran/zmk-feature-custom-settings instead of manually
   implementing setting save code. It provides a typed settings registry and
@@ -81,12 +77,6 @@ west zmk-test tests -m .
 cd web && npm test
 # Check that no template placeholder remains (also runs in pre-commit)
 python3 scripts/init_module.py --verify-only
-# Hardware-free Renode test (boot, core Studio RPC, this module's custom
-# RPC) -- see README.md's "Hardware-free Renode testing" section for the
-# full build+run sequence. Needs the renode_smoke_test build.yaml artifact
-# built first (`west zmk-build tests/zmk-config -af renode`, or just let
-# `python3 -m unittest` build everything); the harness comes from the
-# zmk-west-commands west dependency (dependencies/zmk-west-commands), fetched
-# by the usual `west update`.
+# Hardware-free Renode test (see README.md's "Hardware-free Renode testing")
 west zmk-renode-test tests/renode --elf build/renode_smoke_test/zephyr/zmk.elf
 ```
