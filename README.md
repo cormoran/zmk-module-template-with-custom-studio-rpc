@@ -163,16 +163,17 @@ module's own custom Studio RPC subsystem. This is a *step* in the `Build`
 job in `.github/workflows/zmk-module.yml` (not a separate job) -- it tests
 the `renode_smoke_test` artifact `python3 -m unittest -v` already built
 (see `tests/zmk-config/build.yaml`) using a reusable action,
-[`cormoran/zmk-workspace`'s
-`zmk-renode-test`](https://github.com/cormoran/zmk-workspace/tree/main/.github/actions/zmk-renode-test).
+[`cormoran/zmk-west-commands`'s
+`zmk-renode-test`](https://github.com/cormoran/zmk-west-commands/tree/main/.github/actions/zmk-renode-test).
 **That action does not build firmware** -- this module's own build flow
-does, using the `renode-studio-uart` Zephyr snippet that `zmk-workspace`
-provides as a west dependency (see
+does, using the `renode-studio-uart` Zephyr snippet that `zmk-west-commands`
+provides as a west dependency (it is also a Zephyr module -- see
 `west/west-dependency/west-test-dependency.yml`); the action only boots the
 resulting ELF and runs tests against it.
 
-To reproduce locally (after the usual `west update`, which also fetches
-`zmk-workspace` into `dependencies/zmk-workspace`):
+`zmk-west-commands` also provides the `west zmk-renode-test` command the
+action wraps. To reproduce locally (after the usual `west update`, which
+fetches `zmk-west-commands` into `dependencies/zmk-west-commands`):
 
 ```bash
 # 1. Build the Renode-testable artifact (Studio-RPC-over-UART overlay + the
@@ -183,24 +184,25 @@ To reproduce locally (after the usual `west update`, which also fetches
 west zmk-build tests/zmk-config -af renode
 # (equivalent to letting the full `python3 -m unittest -v` build sweep run)
 
-# 2. Generic smoke test (boot banner + core Studio RPC).
-python3 dependencies/zmk-workspace/skills/test-zmk-renode/scripts/renode_smoke.py \
-  --elf build/renode_smoke_test/zephyr/zmk.elf --west-topdir "$PWD"
+# 2. Generic smoke test (boot banner + core Studio RPC) + this module's own
+#    Renode tests under tests/renode/ (custom Studio RPC subsystem). The
+#    command downloads Renode on first use, sets ZMK_RENODE_ELF + PYTHONPATH
+#    for the test files, and runs them.
+west zmk-renode-test tests/renode --elf build/renode_smoke_test/zephyr/zmk.elf
 
-# 3. This module's own Renode test (custom Studio RPC subsystem). PYTHONPATH
-#    is optional -- tests/renode/renode_test.py falls back to
-#    dependencies/zmk-workspace/skills/test-zmk-renode/scripts automatically.
+# Or run just this module's own Renode test file directly (it falls back to
+# dependencies/zmk-west-commands/scripts/lib/renode on PYTHONPATH):
 ZMK_RENODE_ELF="$PWD/build/renode_smoke_test/zephyr/zmk.elf" \
 python3 tests/renode/renode_test.py -v
 ```
 
 To adapt `tests/renode/renode_test.py` for your own module: it imports
-`renode_harness` (from the `zmk-workspace` west dependency, via
-`PYTHONPATH` in CI or the automatic fallback locally) for all the
-Renode/RPC plumbing, reads the built ELF's path from `ZMK_RENODE_ELF`, and
-only needs to know your module's own custom-subsystem identifier and proto
-messages -- see the file's own module docstring for how the `zmk.custom`
-envelope (subsystem discovery/addressing) works.
+`renode_harness` (from the `zmk-west-commands` west dependency, via
+`PYTHONPATH` set by the command/action or the automatic fallback locally)
+for all the Renode/RPC plumbing, reads the built ELF's path from
+`ZMK_RENODE_ELF`, and only needs to know your module's own custom-subsystem
+identifier and proto messages -- see the file's own module docstring for how
+the `zmk.custom` envelope (subsystem discovery/addressing) works.
 
 ### Running BLE (BabbleSim) tests
 
@@ -209,9 +211,18 @@ device (the keyboard as a split central, its split peripheral, and a simulated
 host computer) runs as a real firmware build for the `nrf52_bsim` board on a
 simulated 2.4GHz radio ([BabbleSim](https://babblesim.github.io/)). They verify
 that split keyboard pairing/HID reporting keeps working with this module
-enabled, and that the custom Studio RPC subsystem answers over the Studio BLE
-GATT transport (`tests/ble/studio_rpc_central/` is the simulated Studio
-client).
+enabled (`tests/ble/split/basic`), that the custom Studio RPC subsystem answers
+over the Studio BLE GATT transport while the split link is active
+(`tests/ble/studio/custom-rpc-split`), and that the split-relay sample feature
+delivers the RPC value to the peripheral (`tests/ble/studio/relay-to-peripheral`).
+
+They run via [`cormoran/zmk-west-commands`'s `west zmk-ble-test`
+command](https://github.com/cormoran/zmk-west-commands/tree/main#west-zmk-ble-test)
+(and the matching `zmk-ble-test` GitHub Action in the `ble-test` CI job). A
+directory is a **test case** iff it contains `nrf52_bsim.keymap`; the shared,
+module-agnostic Studio-over-BLE host app (`ble-studio-host`, owned and built by
+`zmk-west-commands`) is driven by a per-case declarative `studio_requests.json`
+-- no host C code is copied into this module.
 
 BabbleSim only runs on x86 Linux (in CI: the `ble-test` job). Locally:
 
@@ -220,14 +231,50 @@ BabbleSim only runs on x86 Linux (in CI: the `ble-test` job). Locally:
 west config manifest.group-filter -- +babblesim
 west update --narrow
 make -C dependencies/tools/bsim everything -j 8
-
-# Run all BLE tests
 export BSIM_OUT_PATH=$(west topdir)/dependencies/tools/bsim
-./tests/ble/run-ble-test.sh all
+export BSIM_COMPONENTS_PATH=$BSIM_OUT_PATH/components
+
+# Run all BLE tests (this module added via -m .)
+west zmk-ble-test tests/ble -m .
 # Run a single case / regenerate its snapshot after changing behavior
-./tests/ble/run-ble-test.sh tests/ble/split/basic
-ZMK_TESTS_AUTO_ACCEPT=y ./tests/ble/run-ble-test.sh tests/ble/split/basic
+west zmk-ble-test tests/ble/split/basic -m .
+west zmk-ble-test tests/ble/split/basic -m . --auto-accept
 ```
+
+A Studio-over-BLE case ships one `studio_requests.json` -- an ordered list of
+`zmk.studio.Request` messages in protobuf's canonical JSON mapping. A bytes
+field (e.g. a custom-subsystem `Call.payload`) is written as
+`{"$type": "<full.message.name>", ...}` and encoded against this module's own
+`proto/` at test time. For example, discover the custom subsystems, then call
+this module's sample RPC with `value: 42`:
+
+```json
+[
+  { "custom": { "listCustomSubsystems": {} } },
+  {
+    "custom": {
+      "call": {
+        "subsystemIndex": 0,
+        "payload": {
+          "$type": "your_name.template.Request",
+          "sample": { "value": 42 }
+        }
+      }
+    }
+  }
+]
+```
+
+`siblings.txt` references the shared host as `./{studio_host} -d=2` and any
+split peripheral as `./{prefix}_<case>_peripheral.exe -d=3` (the runner
+expands `{studio_host}` / `{prefix}`). `events.patterns` (a `sed -E -n`
+script) filters the combined device log and `events.snapshot` is the expected
+result. **Any device's output can be asserted, not just the host** -- e.g.
+`tests/ble/studio/relay-to-peripheral` asserts the peripheral's
+received-value log line by relabeling its `d_03:` lines with a keyword-guarded
+substitution. See zmk-west-commands' README "Device numbering & asserting any
+device (incl. peripherals)" section and `ble-studio-host/README.md` for the
+full DSL and peripheral-assertion convention.
 
 ### Sync changes from template
 

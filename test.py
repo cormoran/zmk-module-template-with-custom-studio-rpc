@@ -73,6 +73,11 @@ class WestCommandsTests(unittest.TestCase):
             result.stdout,
             result.stdout + result.stderr,
         )
+        self.assertIn(
+            "PASS: studio/relay-to-peripheral",
+            result.stdout,
+            result.stdout + result.stderr,
+        )
         self.assertNotIn("FAILED: ", result.stdout, result.stdout + result.stderr)
 
     def test_zmk_build(self):
@@ -121,7 +126,7 @@ class WestCommandsTests(unittest.TestCase):
                 ),
                 # Hardware-free Renode testing artifact (see README.md's
                 # "Hardware-free Renode testing" section): built with the
-                # renode-studio-uart snippet from cormoran/zmk-workspace
+                # renode-studio-uart snippet from cormoran/zmk-west-commands
                 # (a test-only west dependency) instead of the real
                 # USB-carried studio-rpc-usb-uart snippet. Verify the
                 # snippet's Kconfig actually took effect -- the Renode-only
