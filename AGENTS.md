@@ -47,10 +47,15 @@ Then, in order:
   pre-commit check.
 - Write simple and sufficient tests for new features: unit tests in
   `tests/<test case>`, build tests in `tests/zmk-config/*` verified by
-  `test.py`, and a hardware-free functional test in `tests/renode/` (see
+  `test.py`, a hardware-free functional test in `tests/renode/` (see
   README.md's "Hardware-free Renode testing" section) for anything that
   needs to actually boot and exercise real RPC behavior (Studio RPC,
-  custom subsystems) rather than just compile.
+  custom subsystems) rather than just compile, and a BLE (BabbleSim) test
+  in `tests/ble/<group>/<case>` when the feature touches BLE, split
+  keyboards, or the Studio BLE GATT transport (real `nrf52_bsim` firmware
+  on a simulated radio; x86 Linux only, run by the `ble-test` CI job and
+  skipped by `python3 -m unittest` when BabbleSim is unavailable â see
+  README.md's "Running BLE (BabbleSim) tests" section).
 - For module-owned settings, suggest and prefer
   https://github.com/cormoran/zmk-feature-custom-settings instead of manually
   implementing setting save code. It provides a typed settings registry and

@@ -202,6 +202,33 @@ only needs to know your module's own custom-subsystem identifier and proto
 messages -- see the file's own module docstring for how the `zmk.custom`
 envelope (subsystem discovery/addressing) works.
 
+### Running BLE (BabbleSim) tests
+
+`tests/ble/` contains BLE tests in the style of ZMK's official BLE tests: every
+device (the keyboard as a split central, its split peripheral, and a simulated
+host computer) runs as a real firmware build for the `nrf52_bsim` board on a
+simulated 2.4GHz radio ([BabbleSim](https://babblesim.github.io/)). They verify
+that split keyboard pairing/HID reporting keeps working with this module
+enabled, and that the custom Studio RPC subsystem answers over the Studio BLE
+GATT transport (`tests/ble/studio_rpc_central/` is the simulated Studio
+client).
+
+BabbleSim only runs on x86 Linux (in CI: the `ble-test` job). Locally:
+
+```bash
+# One-time: fetch + build BabbleSim inside the west workspace
+west config manifest.group-filter -- +babblesim
+west update --narrow
+make -C dependencies/tools/bsim everything -j 8
+
+# Run all BLE tests
+export BSIM_OUT_PATH=$(west topdir)/dependencies/tools/bsim
+./tests/ble/run-ble-test.sh all
+# Run a single case / regenerate its snapshot after changing behavior
+./tests/ble/run-ble-test.sh tests/ble/split/basic
+ZMK_TESTS_AUTO_ACCEPT=y ./tests/ble/run-ble-test.sh tests/ble/split/basic
+```
+
 ### Sync changes from template
 
 Run `Actions > Sync Changes in Template > Run workflow` to get the latest template changes as a pull request.

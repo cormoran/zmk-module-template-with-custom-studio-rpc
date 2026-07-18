@@ -1,0 +1,2 @@
+./studio_rpc_central.exe -d=2
+./tmpl_ble_studio_custom-rpc-split_peripheral.exe -d=3

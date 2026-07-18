@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import platform
 import shutil
 import subprocess
@@ -54,6 +55,26 @@ class WestCommandsTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("PASS: test", result.stdout, result.stdout + result.stderr)
         self.assertIn("PASS: studio", result.stdout, result.stdout + result.stderr)
+        self.assertNotIn("FAILED: ", result.stdout, result.stdout + result.stderr)
+
+    @unittest.skipUnless(
+        platform.system() == "Linux" and os.environ.get("BSIM_OUT_PATH"),
+        "BLE tests require Linux and a compiled BabbleSim tree (BSIM_OUT_PATH)",
+    )
+    def test_ble(self):
+        result = subprocess.run(
+            [str(THIS_DIR / "tests" / "ble" / "run-ble-test.sh"), "all"],
+            capture_output=True,
+            text=True,
+            cwd=THIS_DIR,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("PASS: split/basic", result.stdout, result.stdout + result.stderr)
+        self.assertIn(
+            "PASS: studio/custom-rpc-split",
+            result.stdout,
+            result.stdout + result.stderr,
+        )
         self.assertNotIn("FAILED: ", result.stdout, result.stdout + result.stderr)
 
     def test_zmk_build(self):

@@ -82,6 +82,37 @@ jobs:
           tests: tests/renode
           west-topdir: .
 
+  ble-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: zmkfirmware/zmk-build-arm:4.1
+    name: BLE (BabbleSim) Test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/west-init
+      - name: Fetch BabbleSim
+        run: |
+          west config manifest.group-filter -- +babblesim
+          west update --narrow
+      - name: Build BabbleSim
+        working-directory: dependencies/tools/bsim
+        run: make everything -j $(nproc)
+      - name: Run BLE tests
+        env:
+          BSIM_OUT_PATH: ${{ github.workspace }}/dependencies/tools/bsim
+          BSIM_COMPONENTS_PATH: ${{ github.workspace }}/dependencies/tools/bsim/components
+          BLE_TESTS_QUIET_OUTPUT: y
+        run: ./tests/ble/run-ble-test.sh all
+      - name: Upload logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ble-test-logs
+          path: |
+            build/ble/**/*.log
+
   keepalive:
     if: github.event_name == 'schedule'
     permissions: write-all
