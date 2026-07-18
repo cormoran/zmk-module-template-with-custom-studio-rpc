@@ -18,19 +18,14 @@ manifest:
       import:
         file: app/west.yml
       clone-depth: 1
+    # Provides the `west zmk-renode-test` / `west zmk-ble-test` commands, the
+    # shared `ble-studio-host` app + `studio_requests.json` DSL, and (as a
+    # Zephyr module -- see its own zephyr/module.yml) the Renode-only Studio
+    # RPC UART transport + the renode-studio-uart snippet used by
+    # tests/zmk-config/build.yaml's renode_smoke_test artifact.
+    # TODO: switch revision back to main once
+    # cormoran/zmk-west-commands#18/#19 merge.
     - name: zmk-west-commands
       remote: cormoran
-      revision: main
+      revision: fd49434abfcb22e48a50c15be1c78ab57b37dc50
       import: true
-    # Provides the Renode-only Studio RPC UART transport + the
-    # renode-studio-uart snippet (as a Zephyr module -- see its own
-    # zephyr/module.yml) used by tests/zmk-config/build.yaml's
-    # renode_smoke_test artifact and the zmk-renode-test GitHub Action.
-    # Test-only: do not add this to west-dependency.yml (that one is
-    # imported by consumers of this module).
-    # TODO: switch revision to main once cormoran/zmk-workspace's
-    # claude/renode-ci-action PR merges.
-    - name: zmk-workspace
-      remote: cormoran
-      revision: e4d20098a5be99fffa355047419f8a678031abb8
-      clone-depth: 1

@@ -1,2 +1,2 @@
 ./ble_test_central.exe -d=2
-./tmpl_ble_split_basic_peripheral.exe -d=3
+./{prefix}_split_basic_peripheral.exe -d=3

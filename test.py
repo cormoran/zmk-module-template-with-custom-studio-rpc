@@ -62,12 +62,10 @@ class WestCommandsTests(unittest.TestCase):
         "BLE tests require Linux and a compiled BabbleSim tree (BSIM_OUT_PATH)",
     )
     def test_ble(self):
-        result = subprocess.run(
-            [str(THIS_DIR / "tests" / "ble" / "run-ble-test.sh"), "all"],
-            capture_output=True,
-            text=True,
-            cwd=THIS_DIR,
-        )
+        # BLE (BabbleSim) tests run via zmk-west-commands' `west zmk-ble-test`
+        # command (builds the DUT/peripherals/host under bsim and diffs each
+        # case's filtered output against its checked-in snapshot).
+        result = run_west(["zmk-ble-test", "tests/ble", "-m", "."])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("PASS: split/basic", result.stdout, result.stdout + result.stderr)
         self.assertIn(

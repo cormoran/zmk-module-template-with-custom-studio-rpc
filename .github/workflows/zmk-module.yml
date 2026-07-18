@@ -67,20 +67,20 @@ jobs:
       # testing" section): boots the renode_smoke_test artifact built above
       # and runs tests/renode/. This action does NOT build firmware itself
       # (repo-owner requirement) -- it only tests the ELF path given below.
-      # Pinned by commit SHA (immutable, works even before any PR into
-      # zmk-workspace merges). Bump this SHA whenever a fix lands on
-      # zmk-workspace's claude/renode-ci-action branch.
-      # TODO: repoint to @main after the zmk-workspace PR merges (and
-      # switch west/west-dependency/west-test-dependency.yml's zmk-workspace
-      # revision to main at the same time).
+      # Pinned by commit SHA (immutable, works even before the source PRs
+      # merge). Bump this SHA whenever a fix lands on zmk-west-commands's
+      # claude/phase2-ble branch, and keep it in sync with the
+      # zmk-west-commands revision in
+      # west/west-dependency/west-test-dependency.yml.
+      # TODO: repoint to @main after cormoran/zmk-west-commands#18/#19 merge
+      # (and switch that manifest's zmk-west-commands revision to main too).
       # Paths are relative to the checkout root -- do NOT use
       # ${{ github.workspace }} here: in a container job that expression
       # is the runner-host path, not the container's mount path.
-      - uses: cormoran/zmk-workspace/.github/actions/zmk-renode-test@e4d20098a5be99fffa355047419f8a678031abb8
+      - uses: cormoran/zmk-west-commands/.github/actions/zmk-renode-test@fd49434abfcb22e48a50c15be1c78ab57b37dc50
         with:
           elf-path: build/renode_smoke_test/zephyr/zmk.elf
           tests: tests/renode
-          west-topdir: .
 
   ble-test:
     runs-on: ubuntu-latest
@@ -92,19 +92,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - uses: ./.github/actions/west-init
-      - name: Fetch BabbleSim
-        run: |
-          west config manifest.group-filter -- +babblesim
-          west update --narrow
-      - name: Build BabbleSim
-        working-directory: dependencies/tools/bsim
-        run: make everything -j $(nproc)
-      - name: Run BLE tests
-        env:
-          BSIM_OUT_PATH: ${{ github.workspace }}/dependencies/tools/bsim
-          BSIM_COMPONENTS_PATH: ${{ github.workspace }}/dependencies/tools/bsim/components
-          BLE_TESTS_QUIET_OUTPUT: y
-        run: ./tests/ble/run-ble-test.sh all
+      # Runs the BabbleSim BLE tests via zmk-west-commands' zmk-ble-test action:
+      # it enables the +babblesim west group, fetches + `make`s (and caches) the
+      # bsim tree, installs protobuf/protoc for the studio_requests.json DSL,
+      # exports BSIM_OUT_PATH/BSIM_COMPONENTS_PATH, and runs `west zmk-ble-test`.
+      # Pinned by commit SHA; keep it in sync with the zmk-west-commands revision
+      # in west/west-dependency/west-test-dependency.yml and the renode action
+      # SHA above.
+      # TODO: repoint to @main after cormoran/zmk-west-commands#18/#19 merge.
+      - uses: cormoran/zmk-west-commands/.github/actions/zmk-ble-test@fd49434abfcb22e48a50c15be1c78ab57b37dc50
+        with:
+          tests: tests/ble
+          module: .
       - name: Upload logs
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

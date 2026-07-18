@@ -86,7 +86,7 @@ python3 scripts/init_module.py --verify-only
 # full build+run sequence. Needs the renode_smoke_test build.yaml artifact
 # built first (`west zmk-build tests/zmk-config -af renode`, or just let
 # `python3 -m unittest` build everything); the harness comes from the
-# zmk-workspace west dependency (dependencies/zmk-workspace), fetched by
-# the usual `west update`.
-python3 tests/renode/renode_test.py -v
+# zmk-west-commands west dependency (dependencies/zmk-west-commands), fetched
+# by the usual `west update`.
+west zmk-renode-test tests/renode --elf build/renode_smoke_test/zephyr/zmk.elf
 ```

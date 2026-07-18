@@ -5,7 +5,7 @@ emulator and exercise its own custom Studio RPC subsystem end to end.
 This is the one test file a real module built from this template is
 expected to rewrite -- everything generic (booting, the core Studio RPC
 GetDeviceInfo round-trip) already ran as the "smoke test" step of the
-`zmk-renode-test` GitHub Action (see cormoran/zmk-workspace's
+`zmk-renode-test` GitHub Action (see cormoran/zmk-west-commands's
 `.github/actions/zmk-renode-test/`) before this file even runs. This file
 only needs to know about *this module's own* RPC surface.
 
@@ -15,9 +15,9 @@ section for the full story):
     built with the Renode Studio-RPC-over-UART overlay + transport (real
     hardware normally carries Studio RPC over USB; Renode's USB model is a
     non-functional register stub, so testing under emulation swaps in a
-    wired-UART carrier with identical RPC framing -- see zmk-workspace's
-    skills/test-zmk-renode/SKILL.md for why).
-  - `renode_harness` (a module from that same zmk-workspace checkout) is
+    wired-UART carrier with identical RPC framing -- see zmk-west-commands's
+    README `west zmk-renode-test` section for why).
+  - `renode_harness` (a module from that same zmk-west-commands checkout) is
     importable via PYTHONPATH -- the action sets this up. It provides
     RenodeSession/boot_single/wait_for_text/proto compiling, so this file
     doesn't need to reimplement any of the Renode-specific plumbing.
@@ -69,7 +69,7 @@ model) was deliberately not chased further -- it does not affect real
 hardware, and fixing it means emulator/harness work, not module work.
 
 Per this project's own convention for documented-but-not-chased-further
-findings (see zmk-workspace's test-zmk-renode skill, T3/BLE), the real
+findings, the real
 end-to-end round trip is captured below as a test that asserts the *known
 failure under Renode* (so a future harness/emulator fix will make it
 visibly start failing, prompting an update) rather than silently skipped.
@@ -88,7 +88,7 @@ everything under `tests/renode/` explicitly, with `ZMK_RENODE_ELF` and
 PYTHONPATH already set.)
 
 The Renode-testable ELF must already be built; see README.md for the exact
-`build_fw.py` invocation, or let the composite action do it in CI.
+`west zmk-build` invocation, or let the composite action do it in CI.
 """
 
 from __future__ import annotations
@@ -100,23 +100,18 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# renode_harness comes from the zmk-workspace checkout the action provides
+# renode_harness comes from the zmk-west-commands checkout the action provides
 # on PYTHONPATH. Support running this file directly too by falling back to
-# conventional relative locations: first the zmk-workspace west dependency
-# this repo now has (west/west-dependency/west-test-dependency.yml --
-# nicer than requiring a sibling checkout, since `west update` already
-# fetches it), then a sibling `zmk-workspace` checkout next to this repo.
+# conventional relative locations: first the zmk-west-commands west dependency
+# this repo has (west/west-dependency/west-test-dependency.yml -- nicer than
+# requiring a sibling checkout, since `west update` already fetches it), then
+# a sibling `zmk-west-commands` checkout next to this repo.
 try:
     import renode_harness
 except ImportError:  # pragma: no cover - convenience fallback for local dev
     fallback_candidates = [
-        REPO_ROOT
-        / "dependencies"
-        / "zmk-workspace"
-        / "skills"
-        / "test-zmk-renode"
-        / "scripts",
-        REPO_ROOT.parent / "zmk-workspace" / "skills" / "test-zmk-renode" / "scripts",
+        REPO_ROOT / "dependencies" / "zmk-west-commands" / "scripts" / "lib" / "renode",
+        REPO_ROOT.parent / "zmk-west-commands" / "scripts" / "lib" / "renode",
     ]
     for fallback in fallback_candidates:
         if fallback.is_dir():
