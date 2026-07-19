@@ -172,12 +172,12 @@ Details (command/action contract, `renode-studio-uart` snippet): see
 ### Running BLE (BabbleSim) tests
 
 `tests/ble/` runs real `nrf52_bsim` firmware on a simulated radio (x86 Linux
-only; CI's `ble-test` job). `split/basic` checks split pairing/HID with the
-module enabled; `studio/custom-rpc-split` checks, in one split topology, the
-custom Studio RPC over the BLE GATT transport AND that the split-relay sample
-delivers the RPC value to the peripheral (asserted via the peripheral's log
-line). The Studio host side is one declarative `studio_requests.json` per
-case -- no host C code in this module. Locally:
+only; CI's `ble-test` job). The one case, `studio/custom-rpc-split`, checks --
+in a split central+peripheral topology -- that the custom Studio RPC answers
+over the BLE GATT transport while the split link is active, AND that the
+split-relay sample delivers the RPC value to the peripheral (asserted via the
+peripheral's log line). The Studio host side is one declarative
+`studio_requests.json` -- no host C code in this module. Locally:
 
 ```bash
 west zmk-ble-test tests/ble -m .   # --auto-accept regenerates snapshots

@@ -66,7 +66,6 @@ class WestCommandsTests(unittest.TestCase):
         # case's filtered output against its checked-in snapshot).
         result = run_west(["zmk-ble-test", "tests/ble", "-m", "."])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("PASS: split/basic", result.stdout, result.stdout + result.stderr)
         self.assertIn(
             "PASS: studio/custom-rpc-split",
             result.stdout,
