@@ -39,10 +39,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Building the extra usb_wired_central + usb_wired_peripheral artifacts
-    # (tests/zmk-config/build.yaml) plus installing Renode and running the
-    # Renode test suite takes longer than a plain build; 10 minutes was fine
-    # before those existed.
+    # Extra split-pair builds + installing Renode + the Renode test suite need
+    # more than a plain build's budget.
     timeout-minutes: 30
     container:
       image: zmkfirmware/zmk-build-arm:stable
@@ -53,8 +51,7 @@ jobs:
       - uses: ./.github/actions/west-init
       - name: Test
         # Builds every tests/zmk-config/build.yaml artifact, including the
-        # usb_wired_central + usb_wired_peripheral pair the Renode step below
-        # tests -- "build done in a previous step" for the Renode CI action.
+        # wired-split pair the Renode step below tests.
         run: python3 -m unittest -v
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -62,20 +59,10 @@ jobs:
           name: zmk-firmware
           path: |
             build/*/zephyr/zmk.uf2
-      # Hardware-free Renode test (see README.md's "Hardware-free Renode
-      # testing" section): boots the usb_wired_central + usb_wired_peripheral
-      # pair built above and runs tests/renode/. This action does NOT build
-      # firmware itself (repo-owner requirement) -- it only tests the ELFs
-      # given below.
-      #
-      # `mode: wired-split` boots a WIRED split pair whose central answers
-      # Studio RPC over the emulated USB CDC (USB consumes no UARTE, so the two
-      # UARTEs stay free for console + the wired split link). One mode covers
-      # both the central-only Studio path and the split path, and -- unlike the
-      # removed uart mode -- the custom-RPC response actually round-trips (over
-      # USB, not a UART whose TX stalls under Renode). `elf-path` is the central
-      # half, `peripheral-elf` the peripheral. See zmk-west-commands'
-      # docs/renode-testing.md for the mode contract.
+      # Hardware-free Renode test (see README.md): boots the wired-split pair
+      # built above and runs tests/renode/. This action does NOT build firmware
+      # -- it only tests the ELFs given (`elf-path` = central, `peripheral-elf`
+      # = peripheral). See zmk-west-commands' docs/renode-testing.md.
       #
       # Keep the ref in sync with the zmk-west-commands revision in
       # west/west-dependency/west-test-dependency.yml.

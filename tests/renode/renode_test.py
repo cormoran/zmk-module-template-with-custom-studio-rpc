@@ -1,37 +1,22 @@
 #!/usr/bin/env python3
-"""Hardware-free functional test: boot this module's firmware as a WIRED split
-pair in the Renode emulator and exercise its own custom Studio RPC subsystem
-end to end -- over the central's emulated USB CDC.
+"""Hardware-free functional test: boot this module's firmware as a wired split
+pair in Renode and exercise its own custom Studio RPC over the central's
+emulated USB CDC. This is the one test file a module built from this template
+rewrites for its own RPC surface; the generic checks (both halves booting, the
+wired split link, a core GetDeviceInfo round trip over USB) already ran in the
+action's smoke step.
 
-This is the one test file a real module built from this template is expected to
-rewrite -- everything generic (both halves booting, the wired split link, a core
-Studio RPC GetDeviceInfo round trip over USB) already ran as the "smoke test"
-step of the `zmk-renode-test` GitHub Action (see cormoran/zmk-west-commands's
-`.github/actions/zmk-renode-test/`) before this file even runs. This file only
-needs to know about *this module's own* RPC surface.
-
-Why wired-split mode: it exercises BOTH the central-only Studio path and the
-split path in one boot. cormoran/zmk-west-commands' `west zmk-renode-test
---mode wired-split` boots two real images -- a central on the NRF_USBD_Full USB
-platform (Studio RPC over the emulated USB CDC) and a plain wired peripheral,
-their split-link UARTEs cross-connected through a Renode UART hub. Studio riding
-USB (not a UART) is also what makes the custom-RPC *response* actually
-round-trip here: the old uart mode's ~50-byte custom responses stalled on the
-nRF52840 UARTE TX path under Renode, but the USB CDC transport does not.
-
-Wiring: `west zmk-renode-test tests/renode --mode wired-split --elf <CENTRAL>
---peripheral-elf <PERIPHERAL>` runs the generic smoke, then this file with the
-`ZMK_RENODE_*` env contract set (see zmk-west-commands' docs/renode-testing.md,
-"Module-test env contract"):
+Run by `west zmk-renode-test tests/renode --mode wired-split --elf <CENTRAL>
+--peripheral-elf <PERIPHERAL>`, which sets the `ZMK_RENODE_*` env contract (see
+zmk-west-commands' docs/renode-testing.md, "Module-test env contract"):
   ZMK_RENODE_MODE           = wired-split
   ZMK_RENODE_ELF            = the split CENTRAL ELF
   ZMK_RENODE_PERIPHERAL_ELF = the split PERIPHERAL ELF
   ZMK_RENODE_STORAGE_ADDR / _SIZE = the central's NVS storage_partition overrides
-and `renode_harness` (zmk-west-commands' scripts/lib/renode) on PYTHONPATH.
+and puts `renode_harness` (zmk-west-commands' scripts/lib/renode) on PYTHONPATH.
 
-(Named `renode_test.py`, not `test_renode.py`, on purpose: it needs real
-firmware ELFs, so it must stay out of `python3 -m unittest`'s `test*.py`
-auto-discovery.)
+(Named `renode_test.py`, not `test_renode.py`, so it stays out of
+`python3 -m unittest`'s `test*.py` auto-discovery -- it needs real ELFs.)
 """
 
 from __future__ import annotations
@@ -79,9 +64,6 @@ INVALID_SUBSYSTEM_INDEX = 99
 SAMPLE_VALUE = 42
 # See handle_sample_request() in src/studio/template_handler.c.
 EXPECTED_SAMPLE_RESPONSE = f"Hello from firmware! Received: {SAMPLE_VALUE}"
-# See template_relay_on_sample() in src/split/template_relay.c: the peripheral
-# logs this (LOG_DBG) after the central relays the value over the wired split.
-EXPECTED_RELAY_LOG = f"Peripheral received relayed sample value: {SAMPLE_VALUE} (v1)"
 
 # attach_dual_cdc_bridge's default bridge name -> monitor object prefix.
 BRIDGE_NAME = "bridge"
@@ -110,8 +92,6 @@ class RenodeWiredSplitModuleTests(unittest.TestCase):
             )
 
         # Env contract (see docs/renode-testing.md "Module-test env contract").
-        # This template's test targets wired-split mode (single-DUT Studio over
-        # a UART is gone -- Studio now rides the central's USB CDC).
         mode = os.environ.get("ZMK_RENODE_MODE", "wired-split")
         if mode != "wired-split":
             raise unittest.SkipTest(
@@ -150,10 +130,8 @@ class RenodeWiredSplitModuleTests(unittest.TestCase):
         studio_proto_dir = renode_harness.find_studio_proto_dir(REPO_ROOT)
         cls.studio_pb2 = renode_harness.load_studio_pb2(studio_proto_dir)
 
-        # This module's own proto (proto/your-name/template/template.proto,
-        # package your_name.template) -- compiled separately since it lives
-        # outside zmk-studio-messages. protoc normalizes the hyphenated on-disk
-        # path ("your-name") to a valid Python package ("your_name").
+        # This module's own proto (package your_name.template) -- protoc
+        # normalizes the hyphenated "your-name" path to the "your_name" package.
         out_dir = renode_harness.compile_protos(
             [REPO_ROOT / "proto" / "your-name" / "template" / "template.proto"],
             include_dirs=[REPO_ROOT / "proto"],
@@ -163,9 +141,8 @@ class RenodeWiredSplitModuleTests(unittest.TestCase):
 
         cls.template_pb2 = template_pb2
 
-        # Boot the wired-split pair (central on the NRF_USBD_Full USB platform)
-        # and attach the DualCdcAcmBridge USB host so the central's Studio CDC is
-        # reachable -- the same dance run_usb_wired_smoke does.
+        # Boot the pair and attach the DualCdcAcmBridge USB host to reach the
+        # central's Studio CDC (the same steps run_usb_wired_smoke uses).
         import random
 
         cls.port_base = random.randint(26000, 40000)
@@ -260,8 +237,7 @@ class RenodeWiredSplitModuleTests(unittest.TestCase):
     def test_custom_rpc_sample_round_trip_over_usb(self):
         """Send this module's own SampleRequest to its registered subsystem
         (index 0) and assert the SampleResponse comes back over the central's
-        USB CDC -- the round trip the old uart mode could not complete (its
-        ~50-byte response stalled on the UARTE TX path under Renode)."""
+        USB CDC."""
         inner_req = self.template_pb2.Request()
         inner_req.sample.value = SAMPLE_VALUE
         self._send_call(KNOWN_SUBSYSTEM_INDEX, inner_req.SerializeToString(), request_id=1)
@@ -281,17 +257,12 @@ class RenodeWiredSplitModuleTests(unittest.TestCase):
         self.assertEqual(inner_resp.WhichOneof("response_type"), "sample")
         self.assertEqual(inner_resp.sample.value, EXPECTED_SAMPLE_RESPONSE)
 
-    # NOTE: the module's split-relay *sample* (the central forwarding the
-    # SampleRequest value to the peripheral, which logs
-    # "Peripheral received relayed sample value: 42 (v1)") is deliberately NOT
-    # asserted here. ZMK's relay-over-wired transport is newer than this repo's
-    # pinned zmk (fffa339 relays only over BLE), so building the relay into a
-    # BLE-off wired half fails to link -- hence the plain peripheral above. That
-    # path is covered by the BabbleSim BLE test (tests/ble/studio/custom-rpc-split)
-    # instead. When the zmk pin advances to a revision with wired relay, build
-    # the peripheral with the module (CONFIG_ZMK_SPLIT_RELAY_EVENT +
-    # CONFIG_ZMK_LOG_LEVEL_DBG) and assert EXPECTED_RELAY_LOG on
-    # self.peripheral_console here.
+    # The module's split-relay sample (central forwarding the value to the
+    # peripheral) is covered by the BabbleSim BLE test, not here: relay-over-wired
+    # needs a newer zmk than the pin. To add once it advances: build the
+    # peripheral with the module + CONFIG_ZMK_SPLIT_RELAY_EVENT and assert its
+    # "Peripheral received relayed sample value: 42 (v1)" log on
+    # self.peripheral_console.
 
 
 if __name__ == "__main__":

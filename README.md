@@ -160,11 +160,10 @@ CI boots the firmware in the [Renode](https://renode.io/) emulator (a `Build`
 job step) and runs `tests/renode/` -- `renode_test.py` is the file a module
 built from this template rewrites for its own RPC surface. It uses
 `west zmk-renode-test`'s **`wired-split`** mode: a wired split pair whose central
-answers Studio RPC over the emulated **USB CDC** (so the custom-RPC response
-round-trips, unlike a UART transport that stalls under Renode) while the wired
-split link forwards key events. One mode covers both the central-only Studio
-path and the split path. The ELFs are the `usb_wired_central` /
-`usb_wired_peripheral` artifacts in `tests/zmk-config/build.yaml`. Locally:
+answers Studio RPC over the emulated **USB CDC** while the wired split link
+forwards key events, covering both the central-only Studio path and the split
+path. The ELFs are the `usb_wired_central` / `usb_wired_peripheral` artifacts in
+`tests/zmk-config/build.yaml`. Locally:
 
 ```bash
 west zmk-build tests/zmk-config -af usb_wired_central
