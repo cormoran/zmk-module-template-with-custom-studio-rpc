@@ -77,6 +77,8 @@ west zmk-test tests -m .
 cd web && npm test
 # Check that no template placeholder remains (also runs in pre-commit)
 python3 scripts/init_module.py --verify-only
-# Hardware-free Renode test (see README.md's "Hardware-free Renode testing")
-west zmk-renode-test tests/renode --elf build/renode_smoke_test/zephyr/zmk.elf
+# Hardware-free Renode test (wired-split; see README.md's "Hardware-free Renode testing")
+west zmk-renode-test tests/renode --mode wired-split \
+    --elf build/usb_wired_central/zephyr/zmk.elf \
+    --peripheral-elf build/usb_wired_peripheral/zephyr/zmk.elf
 ```

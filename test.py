@@ -117,22 +117,31 @@ class WestCommandsTests(unittest.TestCase):
                     ],
                     device=[],
                 ),
-                # Hardware-free Renode testing artifact (see README.md's
-                # "Hardware-free Renode testing" section): built with the
-                # renode-studio-uart snippet from cormoran/zmk-west-commands
-                # (a test-only west dependency) instead of the real
-                # USB-carried studio-rpc-usb-uart snippet. Verify the
-                # snippet's Kconfig actually took effect -- the Renode-only
-                # transport enabled, the real USB-gated one and USB itself
-                # disabled.
-                "renode_smoke_test": ConfigAndDeviceTree(
+                # Hardware-free Renode testing pair (see README.md's
+                # "Hardware-free Renode testing" section): a wired split whose
+                # central answers Studio RPC over the emulated USB CDC. The
+                # central is the real studio-rpc-usb-uart image (USB on, BLE
+                # off) with the module + its custom Studio RPC and role central;
+                # the peripheral is a plain wired half (no Studio / no module).
+                "usb_wired_central": ConfigAndDeviceTree(
                     config=[
                         "CONFIG_ZMK_STUDIO=y",
                         "CONFIG_ZMK_TEMPLATE_FEATURE=y",
                         "CONFIG_ZMK_TEMPLATE_FEATURE_STUDIO_RPC=y",
-                        "CONFIG_ZMK_RENODE_STUDIO_UART_TRANSPORT=y",
-                        "# CONFIG_ZMK_STUDIO_TRANSPORT_UART is not set",
-                        "# CONFIG_ZMK_USB is not set",
+                        "CONFIG_ZMK_SPLIT=y",
+                        "CONFIG_ZMK_SPLIT_ROLE_CENTRAL=y",
+                        "CONFIG_ZMK_USB=y",
+                        "# CONFIG_ZMK_BLE is not set",
+                    ],
+                    device=[],
+                ),
+                "usb_wired_peripheral": ConfigAndDeviceTree(
+                    config=[
+                        "CONFIG_ZMK_SPLIT=y",
+                        "# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set",
+                        "# CONFIG_ZMK_STUDIO is not set",
+                        "# CONFIG_ZMK_TEMPLATE_FEATURE is not set",
+                        "# CONFIG_ZMK_BLE is not set",
                     ],
                     device=[],
                 ),

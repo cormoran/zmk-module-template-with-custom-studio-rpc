@@ -21,18 +21,40 @@ include:
     snippet: studio-rpc-usb-uart
 
   # Hardware-free Renode testing (see README.md's "Hardware-free Renode
-  # testing" section). Uses the renode-studio-uart snippet from
-  # cormoran/zmk-west-commands (a test-only west dependency + Zephyr module,
-  # see west/west-dependency/west-test-dependency.yml) in place of the real
-  # USB-carried studio-rpc-usb-uart snippet -- Renode's nRF52840 USBD model
-  # can't present a host-openable CDC port, so this binds Studio RPC (and
-  # the console) to real UART peripherals instead; see that snippet's own
-  # overlay for the full story. Produces zephyr/zmk.elf (not a flashable
-  # .uf2 target on real hardware -- the pinctrl/overlay it uses is
-  # emulation-only).
-  - artifact: renode_smoke_test
+  # testing" section) -- the `wired-split` mode of cormoran/zmk-west-commands'
+  # `west zmk-renode-test`. It boots a WIRED split PAIR of *real*
+  # studio-rpc-usb-uart-style images: the central answers Studio RPC over the
+  # emulated USB CDC (USB consumes no UARTE, so uart0=console + uart1=split link
+  # stay free) while the wired split link forwards key events to the central.
+  # One mode covers BOTH the central-only Studio path (this module's custom RPC,
+  # tests/renode/renode_test.py) and the split path (the built-in smoke injects a
+  # peripheral keypress and asserts the central logs it) -- and, unlike the old
+  # uart mode, the custom-RPC response actually round-trips (Studio rides USB,
+  # not a UART whose TX stalls under Renode). The two shields come from
+  # cormoran/zmk-west-commands (renode_usb_wired_split = central,
+  # renode_wired_split = peripheral).
+  #
+  # NOTE: the module's split-relay *sample* (SampleRequest value forwarded to the
+  # peripheral) is NOT exercised here -- ZMK's relay-over-wired transport is
+  # newer than this repo's pinned zmk (west-test-dependency.yml's fffa339, which
+  # implements relay only over BLE), so building it into a BLE-off wired half
+  # fails to link. That path is covered by the BabbleSim BLE test instead
+  # (tests/ble/studio/custom-rpc-split). Once the zmk pin advances to a revision
+  # with wired relay, enable CONFIG_ZMK_SPLIT_RELAY_EVENT on both halves here and
+  # re-add the relay assertion in renode_test.py.
+  #
+  # These are Renode-emulation images (USB/split pinctrl is emulation-only), not
+  # flashable-as-is; produces build/<artifact>/zephyr/zmk.elf.
+  - artifact: usb_wired_central
     board: xiao_ble//zmk
-    shield: tester_xiao
+    shield: renode_usb_wired_split
     cmake-args: -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_TEMPLATE_FEATURE=y -DCONFIG_ZMK_TEMPLATE_FEATURE_STUDIO_RPC=y
     snippets:
-      - renode-studio-uart
+      - studio-rpc-usb-uart
+
+  # Plain wired peripheral (no module / no Studio) -- the same half the smoke's
+  # generic keypress-relay assertion uses. It just needs to pair over the wired
+  # link and forward key events to the central.
+  - artifact: usb_wired_peripheral
+    board: xiao_ble//zmk
+    shield: renode_wired_split

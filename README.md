@@ -158,19 +158,26 @@ cd web && npm test
 
 CI boots the firmware in the [Renode](https://renode.io/) emulator (a `Build`
 job step) and runs `tests/renode/` -- `renode_test.py` is the file a module
-built from this template rewrites for its own RPC surface. The ELF is the
-`renode_smoke_test` artifact in `tests/zmk-config/build.yaml`. Locally:
+built from this template rewrites for its own RPC surface. It uses
+`west zmk-renode-test`'s **`wired-split`** mode: a wired split pair whose central
+answers Studio RPC over the emulated **USB CDC** (so the custom-RPC response
+round-trips, unlike a UART transport that stalls under Renode) while the wired
+split link forwards key events. One mode covers both the central-only Studio
+path and the split path. The ELFs are the `usb_wired_central` /
+`usb_wired_peripheral` artifacts in `tests/zmk-config/build.yaml`. Locally:
 
 ```bash
-west zmk-build tests/zmk-config -af renode
-west zmk-renode-test tests/renode --mode uart --elf build/renode_smoke_test/zephyr/zmk.elf
+west zmk-build tests/zmk-config -af usb_wired_central
+west zmk-build tests/zmk-config -af usb_wired_peripheral
+west zmk-renode-test tests/renode --mode wired-split \
+    --elf build/usb_wired_central/zephyr/zmk.elf \
+    --peripheral-elf build/usb_wired_peripheral/zephyr/zmk.elf
 ```
 
-`--mode uart` is required: the command defaults to `ble` (the exact
-studio-rpc-usb-uart *hardware* image over emulated BLE), while this template's
-`renode_smoke_test` artifact is a `renode-studio-uart` snippet build (Studio RPC
-over emulated UARTs). Details (the two-mode + `ZMK_RENODE_*` env contract, the
-`renode-studio-uart` snippet): see
+The module's own split-relay *sample* (the central forwarding a value to the
+peripheral) is not exercised here -- ZMK's relay-over-wired transport is newer
+than this repo's pinned zmk, so it is covered by the BabbleSim BLE test instead
+(see below). Details (the mode + `ZMK_RENODE_*` env contract): see
 [zmk-west-commands' README, `west zmk-renode-test`](https://github.com/cormoran/zmk-west-commands#west-zmk-renode-test)
 and [docs/renode-testing.md](https://github.com/cormoran/zmk-west-commands/blob/main/docs/renode-testing.md).
 

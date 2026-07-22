@@ -18,11 +18,10 @@ manifest:
       import:
         file: app/west.yml
       clone-depth: 1
-    # Provides the `west zmk-renode-test` / `west zmk-ble-test` commands, the
-    # shared `ble-studio-host` app + `studio_requests.json` DSL, and (as a
-    # Zephyr module -- see its own zephyr/module.yml) the Renode-only Studio
-    # RPC UART transport + the renode-studio-uart snippet used by
-    # tests/zmk-config/build.yaml's renode_smoke_test artifact.
+    # Provides the `west zmk-renode-test` / `west zmk-ble-test` commands (the
+    # Renode wired-split harness + platforms used by tests/renode, plus the
+    # BabbleSim runner) and the shared `ble-studio-host` app +
+    # `studio_requests.json` DSL for tests/ble.
     - name: zmk-west-commands
       remote: cormoran
       revision: main
