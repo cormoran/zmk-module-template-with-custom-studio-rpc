@@ -163,11 +163,16 @@ built from this template rewrites for its own RPC surface. The ELF is the
 
 ```bash
 west zmk-build tests/zmk-config -af renode
-west zmk-renode-test tests/renode --elf build/renode_smoke_test/zephyr/zmk.elf
+west zmk-renode-test tests/renode --mode uart --elf build/renode_smoke_test/zephyr/zmk.elf
 ```
 
-Details (command/action contract, `renode-studio-uart` snippet): see
-[zmk-west-commands' README, `west zmk-renode-test`](https://github.com/cormoran/zmk-west-commands#west-zmk-renode-test).
+`--mode uart` is required: the command defaults to `ble` (the exact
+studio-rpc-usb-uart *hardware* image over emulated BLE), while this template's
+`renode_smoke_test` artifact is a `renode-studio-uart` snippet build (Studio RPC
+over emulated UARTs). Details (the two-mode + `ZMK_RENODE_*` env contract, the
+`renode-studio-uart` snippet): see
+[zmk-west-commands' README, `west zmk-renode-test`](https://github.com/cormoran/zmk-west-commands#west-zmk-renode-test)
+and [docs/renode-testing.md](https://github.com/cormoran/zmk-west-commands/blob/main/docs/renode-testing.md).
 
 ### Running BLE (BabbleSim) tests
 

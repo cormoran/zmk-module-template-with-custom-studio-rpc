@@ -65,6 +65,14 @@ jobs:
       # testing" section): boots the renode_smoke_test artifact built above
       # and runs tests/renode/. This action does NOT build firmware itself
       # (repo-owner requirement) -- it only tests the ELF path given below.
+      #
+      # `mode: uart` is REQUIRED here (the action's default is `ble`, which
+      # boots the exact studio-rpc-usb-uart *hardware* image over emulated
+      # BLE). This template's renode_smoke_test artifact is instead built
+      # with the `renode-studio-uart` snippet, so Studio RPC + console ride
+      # emulated UARTs -- `west zmk-renode-test --mode uart`. See
+      # zmk-west-commands' docs/renode-testing.md for the two-mode contract.
+      #
       # Keep the ref in sync with the zmk-west-commands revision in
       # west/west-dependency/west-test-dependency.yml.
       # Paths are relative to the checkout root -- do NOT use
@@ -72,6 +80,7 @@ jobs:
       # is the runner-host path, not the container's mount path.
       - uses: cormoran/zmk-west-commands/.github/actions/zmk-renode-test@main
         with:
+          mode: uart
           elf-path: build/renode_smoke_test/zephyr/zmk.elf
           tests: tests/renode
 

@@ -9,10 +9,15 @@ GetDeviceInfo round-trip) already ran as the "smoke test" step of the
 `.github/actions/zmk-renode-test/`) before this file even runs. This file
 only needs to know about *this module's own* RPC surface.
 
-Wiring: `west zmk-renode-test tests/renode --elf <ELF>` sets `ZMK_RENODE_ELF`
-and puts `renode_harness` (zmk-west-commands' scripts/lib/renode) on
-PYTHONPATH -- see README.md's "Hardware-free Renode testing" section and
-zmk-west-commands' README for the rest.
+Wiring: `west zmk-renode-test tests/renode --mode uart --elf <ELF>` runs the
+generic smoke, then this file with the `ZMK_RENODE_*` env contract set --
+`ZMK_RENODE_MODE=uart` (which harness to build) and `ZMK_RENODE_ELF` (the DUT
+ELF) -- and `renode_harness` (zmk-west-commands' scripts/lib/renode) on
+PYTHONPATH. `--mode uart` is required: the command's default mode is `ble`
+(the real hardware image over emulated BLE), whereas this template's
+renode_smoke_test artifact is a `renode-studio-uart` snippet build (Studio RPC
+over emulated UARTs). See README.md's "Hardware-free Renode testing" section
+and zmk-west-commands' docs/renode-testing.md ("Module-test env contract").
 
 *** KNOWN RENODE-ENVIRONMENT LIMITATION, found by this test suite (2026-07-08) ***
 Under Renode -- and, as far as we know, ONLY under Renode; the same code
@@ -123,6 +128,19 @@ class RenodeTemplateModuleTests(unittest.TestCase):
         if cls.renode_path is None:
             raise unittest.SkipTest(
                 "Renode is not installed and could not be auto-installed"
+            )
+
+        # Env contract (see docs/renode-testing.md "Module-test env contract"):
+        # the command exports ZMK_RENODE_MODE = uart | ble. This template's
+        # test only exercises the uart harness (single-DUT Studio RPC over
+        # emulated UARTs via renode_harness.boot_single); a ble-mode DUT is a
+        # different image (the real hardware image) and a different harness.
+        mode = os.environ.get("ZMK_RENODE_MODE", "uart")
+        if mode != "uart":
+            raise unittest.SkipTest(
+                f"ZMK_RENODE_MODE={mode!r}: this template's Renode test targets "
+                "uart mode only -- run `west zmk-renode-test tests/renode "
+                "--mode uart --elf build/renode_smoke_test/zephyr/zmk.elf`"
             )
 
         elf_env = os.environ.get("ZMK_RENODE_ELF")
