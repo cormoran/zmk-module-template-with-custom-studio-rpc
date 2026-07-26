@@ -22,7 +22,12 @@ export default defineConfig({
     // Build and serve at the root: the deployed app lives under /<repo>/ (see
     // vite.config.ts), which `page.goto("/")` would miss. Building here also
     // means the tests can never run against a stale dist.
-    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
+    //
+    // `--host 127.0.0.1` pins the bind to IPv4, matching baseURL: vite preview
+    // otherwise listens on `localhost`, which resolves to ::1 first on GitHub
+    // runners -- the port check passes (it resolves the same way) and then
+    // every page.goto is refused.
+    command: `npm run build && npm run preview -- --host 127.0.0.1 --port ${PORT} --strictPort`,
     port: PORT,
     env: { VITE_BASE: "/" },
     timeout: 300_000,
